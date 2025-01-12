@@ -659,6 +659,11 @@
     "@babel/helper-string-parser" "^7.25.9"
     "@babel/helper-validator-identifier" "^7.25.9"
 
+"@chain-registry/types@^0.50.47":
+  version "0.50.47"
+  resolved "https://registry.yarnpkg.com/@chain-registry/types/-/types-0.50.47.tgz#dac0f157d7fc8f98b0cf99a9f74aa7ecd598aae3"
+  integrity sha512-WEVKnOwcjXjpCFMgEWMRfKUqhho6Tg6fcHmuKS3i4pWp37IxZBdE+Lan6JRBf5Cc6CqfhuZaHqveIRqgci1zBw==
+
 "@coinbase/wallet-sdk@4.0.4":
   version "4.0.4"
   resolved "https://registry.yarnpkg.com/@coinbase/wallet-sdk/-/wallet-sdk-4.0.4.tgz#634cd89bac93eeaf381a1f026476794e53431ed6"
@@ -4507,6 +4512,13 @@ caniuse-lite@^1.0.30001579, caniuse-lite@^1.0.30001646, caniuse-lite@^1.0.300016
     keccak "^3.0.3"
     preact "^10.16.0"
     sha.js "^2.4.11"
+
+chain-registry@^1.69.90:
+  version "1.69.90"
+  resolved "https://registry.yarnpkg.com/chain-registry/-/chain-registry-1.69.90.tgz#8aeb22d5ec45682ce27fc1e305423a05555249c9"
+  integrity sha512-aPrH7myfVUSdGQvc9IpevCIZLUUgGX4se6DeGxCrKC+6yvJSzb9LgHP3ju8w8R908V2NefFDX7gPFk1LTsfFiw==
+  dependencies:
+    "@chain-registry/types" "^0.50.47"
 
 chalk@^4.0.0, chalk@^4.1.0, chalk@^4.1.2:
   version "4.1.2"
