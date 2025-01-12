@@ -18,7 +18,7 @@ import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { Contract } from "ethers";
 import { fetchWalletBalances } from "@/components/api/fetchWalletBalances";
-import { fetchChannelDetails } from "@/components/api/fetchChannelDetails";
+import { fetchChannelDetails } from "@/components/api/fetchAssetInfo";
 import { fetchIbcInfo } from "@/components/api/fetchIbcInfo";
 import { IBC_PRECOMPILE_ABI, IBC_PRECOMPILE_ADDRESS } from "@/components/api/constants";
 
