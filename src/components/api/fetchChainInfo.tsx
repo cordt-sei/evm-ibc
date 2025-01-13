@@ -7,6 +7,8 @@ import type { Chain } from "@chain-registry/types";
 export interface ChainInfo {
   chainId: string;
   chainName?: string;
+  staking?: string;
+  slip44: number;
   chainData: Chain;
 }
 
@@ -60,6 +62,8 @@ export async function fetchChainInfo(
   return {
     chainId,
     chainName: registryData.chain_name,
+    staking: registryData.staking?.staking_tokens[0]?.denom,
+    slip44: registryData.slip44,
     chainData: registryData,
   };
 }

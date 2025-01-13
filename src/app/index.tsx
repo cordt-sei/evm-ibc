@@ -40,6 +40,7 @@ interface WalletBalance {
 // This is a demonstration for the "channel => chain" flow:
 interface ChainDataCache {
   [denomHash: string]: {
+    staking: any;
     chainId: string;
     chainName?: string;
     chainData?: any;
@@ -95,6 +96,7 @@ export default function HomePage() {
             updatedCache[denomHash] = {
               chainId: chainInfo.chainId,
               chainName: chainInfo.chainName,
+              staking: chainInfo.staking,
               chainData: chainInfo.chainData,
             };
           } catch (e) {
@@ -160,6 +162,7 @@ export default function HomePage() {
           const rpcUrl = apis?.rpc?.[0]?.address || "";
           const restUrl = apis?.rest?.[0]?.address || "";
           const baseDenom = chainData.staking?.staking_tokens[0]?.denom || "Unknown";
+          const coinType = chainData.slip44;
           const nativeDenomExponent = assetData.assets[0]?.denom_units.slice(-1)[0];
           const decimals = nativeDenomExponent ? nativeDenomExponent.exponent : "Unknown";
 
@@ -168,9 +171,9 @@ export default function HomePage() {
             chainName: chain_name,
             rpc: rpcUrl,
             rest: restUrl,
-            addressPrefix: ,
+            walletPrefix: bech32_prefix ,
             baseDenom: baseDenom,
-            cointype: cointype,
+            cointype: coinType,
             exponent: decimals,
 
             // ...
