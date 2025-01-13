@@ -40,6 +40,7 @@ interface WalletBalance {
 // This is a demonstration for the "channel => chain" flow:
 interface ChainDataCache {
   [denomHash: string]: {
+    slip44: any;
     staking: any;
     chainId: string;
     chainName?: string;
@@ -97,6 +98,7 @@ export default function HomePage() {
               chainId: chainInfo.chainId,
               chainName: chainInfo.chainName,
               staking: chainInfo.staking,
+              slip44: chainInfo.slip44,
               chainData: chainInfo.chainData,
             };
           } catch (e) {
@@ -238,24 +240,25 @@ export default function HomePage() {
         if (!walletClient) throw new Error("Unable to get Wallet Client.");
 
         // EVM-based IBC approach
-        const channelDetails = await fetchChannelDetails(channelId, "transfer");
+        const { channel, baseDenom } = await decodeDenom(token.denom);
+        const channelDetails = await fetchChannelDetails(channel, "transfer");
         const ibcInfo = await fetchIbcInfo(channelDetails.connectionId, "transfer");
 
         // Construct your transaction data
-        const timeoutTimestamp =
-          BigInt(Date.now() * 1_000_000) + BigInt(600 * 1_000_000_000); // 10 min
-
-        // Alternatively, if you have a more direct approach for building IBC txs, do so
+        const timeoutTimestamp = BigInt(Date.now() * 1_000_000) + BigInt(600 * 1_000_000_000); 
+        // e.g. 10 minutes from now
+        
         const txData = {
           to: IBC_PRECOMPILE_ADDRESS,
-          value: transferAmount, // Make sure it's in correct denom
+          // Convert `transferAmount` to a BigInt or hex if needed
+          value: transferAmount, 
           data: new Contract(IBC_PRECOMPILE_ADDRESS, IBC_PRECOMPILE_ABI).interface.encodeFunctionData(
             "transfer",
             [
-              data.recipient,
+              recipient,
               "transfer",
-              channelDetails.counterpartyChannelId,
-              selectedToken.denom,
+              channelDetails.counterpartyChannelId,  // from decodeDenom -> fetchChannelDetails
+              baseDenom,                           // e.g. "ibc/ABCD1234"
               transferAmount,
               ibcInfo.revisionNumber,
               ibcInfo.revisionHeight,
@@ -264,8 +267,10 @@ export default function HomePage() {
             ]
           ),
         };
-
-        const tx = await walletClient.sendTransaction(txData);
+        
+        // Then send the transaction via your wallet client
+        const txHash = await walletClient.sendTransaction(txData);
+        
         setToastMessage(`Transaction sent. Hash: ${tx.hash}`);
       } else {
         setToastMessage("Non-Ethereum wallets are not supported in this flow yet.");
