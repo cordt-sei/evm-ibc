@@ -1,8 +1,10 @@
+// src/components/ui/drawer.tsx
+
 "use client";
 
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
-
+import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import { cn } from "@/lib/utils";
 
 const Drawer = ({
@@ -17,13 +19,11 @@ const Drawer = ({
 Drawer.displayName = "Drawer";
 
 const DrawerTrigger = DrawerPrimitive.Trigger;
-
 const DrawerPortal = DrawerPrimitive.Portal;
-
 const DrawerClose = DrawerPrimitive.Close;
 
 const DrawerOverlay = React.forwardRef<
-  React.ComponentRef<typeof DrawerPrimitive.Overlay>,
+  React.ElementRef<typeof DrawerPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
   <DrawerPrimitive.Overlay
@@ -35,7 +35,7 @@ const DrawerOverlay = React.forwardRef<
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
 const DrawerContent = React.forwardRef<
-  React.ComponentRef<typeof DrawerPrimitive.Content>,
+  React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DrawerPortal>
@@ -59,10 +59,21 @@ DrawerContent.displayName = "DrawerContent";
 export const WalletDrawer = () => (
   <Drawer>
     <DrawerTrigger>
-      <button>Open Wallet</button>
+      <button className="px-4 py-2 bg-blue-600 text-white rounded-md">
+        Open Wallet
+      </button>
     </DrawerTrigger>
+
     <DrawerContent>
-      <div>Select Wallet Provider</div>
+      <div className="p-4">
+        <h2 className="text-lg font-semibold mb-2">Select Wallet Provider</h2>
+        <DynamicWidget />
+      </div>
+      <DrawerClose>
+        <button className="mb-4 mx-auto block px-4 py-2 text-sm underline">
+          Close
+        </button>
+      </DrawerClose>
     </DrawerContent>
   </Drawer>
 );

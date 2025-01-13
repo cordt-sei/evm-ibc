@@ -1,94 +1,111 @@
 "use client";
 
-import React from "react";
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import * as React from "react";
+import * as LabelPrimitive from "@radix-ui/react-label";
+import { cn } from "@/lib/utils";
 import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription,
-  FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
+  FormProvider,
+  Controller,
+  useFormContext,
+  FieldValues,
+  ControllerProps,
+  UseFormReturn,
+} from "react-hook-form";
+import { Slot } from "@radix-ui/react-slot";
 
-interface AddressFormProps {
-  // This callback receives the validated address
-  onSubmit: (address: string) => void;
+// -----------------------------------------------------------------------------
+// 1) <Form> - Wraps react-hook-form's FormProvider
+//    Accepts the form methods (UseFormReturn) + any children.
+// -----------------------------------------------------------------------------
+interface FormProps<TFieldValues extends FieldValues> extends UseFormReturn<TFieldValues> {
+  children?: React.ReactNode;
+  className?: string;
 }
 
-// Simple address validation schema (example uses EVM style):
-const addressSchema = z.object({
-  address: z
-    .string()
-    .nonempty("Address is required")
-    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid wallet address format"),
-});
-
-type AddressFormValues = z.infer<typeof addressSchema>;
-
-export function AddressForm({ onSubmit }: AddressFormProps) {
-  const form = useForm<AddressFormValues>({
-    resolver: zodResolver(addressSchema),
-    defaultValues: { address: "" },
-  });
-
-  function handleFormSubmit(values: AddressFormValues) {
-    onSubmit(values.address);
-  }
-
-  // Placeholder for pulling address from Keplr/Leap/dynamic.xyz
-  async function handleAutoFill() {
-    try {
-      // For instance, if window.keplr is present:
-      // await window.keplr.enable("chain-id");
-      // const offlineSigner = window.keplr.getOfflineSigner("chain-id");
-      // const accounts = await offlineSigner.getAccounts();
-      // const fetchedAddress = accounts[0].address;
-      
-      // Or if using dynamic.xyz embedded wallet, fetch the user address similarly
-
-      const fetchedAddress = "0x1234..."; // Example dummy address
-      form.setValue("address", fetchedAddress);
-    } catch (error) {
-      console.error("Failed to fetch wallet address:", error);
-    }
-  }
-
+export function Form<TFieldValues extends FieldValues>({
+  children,
+  className,
+  ...formMethods
+}: FormProps<TFieldValues>) {
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Recipient Address</FormLabel>
-              <FormControl>
-                <input
-                  placeholder="Enter wallet address"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-opacity-50"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Provide the wallet address on the target chain
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex gap-4">
-          <Button type="submit">Validate</Button>
-          <Button variant="secondary" type="button" onClick={handleAutoFill}>
-            Autofill from Wallet
-          </Button>
-        </div>
-      </form>
-    </Form>
+    <FormProvider {...formMethods}>
+      <div className={cn(className)}>{children}</div>
+    </FormProvider>
   );
 }
+
+// -----------------------------------------------------------------------------
+// 2) <FormField> - Ties a field to react-hook-form's Controller
+//    Optionally parametrize with TFieldValues & name type.
+// -----------------------------------------------------------------------------
+export function FormField<TFieldValues extends FieldValues>(
+  props: ControllerProps<TFieldValues>
+) {
+  return <Controller {...props} />;
+}
+
+// -----------------------------------------------------------------------------
+// 3) <FormItem> - Generic container for a label + control + message
+// -----------------------------------------------------------------------------
+export const FormItem = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>((props, ref) => {
+  return (
+    <div ref={ref} className={cn("space-y-2", props.className)} {...props} />
+  );
+});
+FormItem.displayName = "FormItem";
+
+// -----------------------------------------------------------------------------
+// 4) <FormLabel> - Ties a label to a field
+// -----------------------------------------------------------------------------
+export const FormLabel = React.forwardRef<
+  React.ComponentRef<typeof LabelPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
+>((props, ref) => {
+  return (
+    <LabelPrimitive.Root
+      ref={ref}
+      className={cn("font-medium", props.className)}
+      {...props}
+    />
+  );
+});
+FormLabel.displayName = "FormLabel";
+
+// -----------------------------------------------------------------------------
+// 5) <FormControl> - The Slot wrapping the input or select, etc.
+// -----------------------------------------------------------------------------
+export const FormControl = React.forwardRef<
+  React.ComponentRef<typeof Slot>,
+  React.ComponentPropsWithoutRef<typeof Slot>
+>((props, ref) => {
+  return <Slot ref={ref} {...props} />;
+});
+FormControl.displayName = "FormControl";
+
+// -----------------------------------------------------------------------------
+// 6) <FormMessage> - Displays field errors
+// -----------------------------------------------------------------------------
+export const FormMessage = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>((props, ref) => {
+  // If you need field-specific errors, pass a field name or
+  // rely on <FormField> with a render prop that shows errors.
+  const {
+    formState: { errors },
+  } = useFormContext();
+
+  return (
+    <p
+      ref={ref}
+      className={cn("text-sm text-red-500", props.className)}
+      {...props}
+    >
+      {props.children ? props.children : null}
+    </p>
+  );
+});
+FormMessage.displayName = "FormMessage";
