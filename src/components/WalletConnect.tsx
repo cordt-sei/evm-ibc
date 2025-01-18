@@ -1,4 +1,3 @@
-import React from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 
 const WalletConnect = () => {

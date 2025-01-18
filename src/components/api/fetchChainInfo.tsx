@@ -1,8 +1,8 @@
 // src/components/api/fetchChainInfo.tsx
 
-import { API_BASE_URL } from "./config";
-import { chains} from "chain-registry";
-import type { Chain } from "@chain-registry/types"; 
+import { API_BASE_URL } from './config';
+import { chains } from 'chain-registry';
+import type { Chain } from '@chain-registry/types';
 
 export interface ChainInfo {
   chainId: string;
@@ -23,13 +23,15 @@ async function fetchChainIdFromClientState(
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch chain info at ${url}. Status: ${response.status}`);
+    throw new Error(
+      `Failed to fetch chain info at ${url}. Status: ${response.status}`
+    );
   }
 
   const data = await response.json();
   const chainId = data?.identified_client_state?.client_state?.chain_id;
   if (!chainId) {
-    throw new Error("chain_id not found in client_state response.");
+    throw new Error('chain_id not found in client_state response.');
   }
 
   return chainId;

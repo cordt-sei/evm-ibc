@@ -8,6 +8,10 @@
       "jsx": true
     }
   },
+    "env": {
+      "browser": true,
+      "node": true
+    }, 
   "plugins": ["@typescript-eslint", "react", "react-hooks", "prettier"],
   "extends": [
     "eslint:recommended",

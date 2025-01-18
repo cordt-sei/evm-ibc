@@ -3,7 +3,7 @@ import { decodeDenom } from './api/decodeIbcDenom';
 import { fetchWalletBalances } from './api/fetchWalletBalances';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 
-type Token = {
+export type Token = {
   denom: string;
   channel: string;
   baseDenom: string;
@@ -16,8 +16,8 @@ const TokenList = ({
   setSelectedToken: React.Dispatch<React.SetStateAction<Token | null>>;
 }) => {
   const [tokens, setTokens] = useState<Token[]>([]);
-  const { user } = useDynamicContext();
-  const walletAddress = user?.address || user?.address;
+  const { primaryWallet } = useDynamicContext();
+  const walletAddress = primaryWallet?.address;
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -32,12 +32,17 @@ const TokenList = ({
           balances.map(async (balance) => {
             try {
               const { channel, baseDenom } = await decodeDenom(balance.denom);
-              return { denom: balance.denom, channel, baseDenom, amount: balance.amount };
+              return {
+                denom: balance.denom,
+                channel,
+                baseDenom,
+                amount: balance.amount,
+              };
             } catch (err) {
               console.error(`Error decoding denom for ${balance.denom}:`, err);
               return null;
             }
-          }),
+          })
         );
 
         // Filter out null values and set tokens

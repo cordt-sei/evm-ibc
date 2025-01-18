@@ -1,28 +1,29 @@
-import React from 'react';
-import { DynamicContextProvider } from '@dynamic-labs/sdk-react-core';
-import { CosmosWalletConnectors } from '@dynamic-labs/cosmos';
-import { EthereumWalletConnectors } from '@dynamic-labs/ethereum';
+import { useState } from 'react';
 import WalletConnect from './WalletConnect';
 import TokenList from './TokenList';
 import TransferForm from './TransferForm';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+
+type Token = {
+  denom: string;
+  channel: string;
+  baseDenom: string;
+  amount: string;
+};
 
 const App = () => {
+  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+  const { primaryWallet } = useDynamicContext();
+  const walletAddress = primaryWallet?.address;
+
   return (
-    <DynamicContextProvider
-      settings={{
-        environmentId: 'REPLACE-WITH-YOUR-ENVIRONMENT-ID', // Replace with your actual environment ID from Dynamic
-        walletConnectors: [CosmosWalletConnectors, EthereumWalletConnectors],
-      }}
-    >
-      <div>
-        <h1>IBC Transfer UI</h1>
-        <WalletConnect />
-        <TokenList setSelectedToken={function (value: React.SetStateAction<{ denom: string; channel: string; baseDenom: string; amount: string; } | null>): void {
-          throw new Error('Function not implemented.');
-        } } />
-        <TransferForm />
-      </div>
-    </DynamicContextProvider>
+    <div>
+      <h1>IBC Transfer UI</h1>
+      <p>Connected Wallet: {walletAddress || 'No wallet connected'}</p>
+      <WalletConnect />
+      <TokenList setSelectedToken={setSelectedToken} />
+      <TransferForm />
+    </div>
   );
 };
 

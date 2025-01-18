@@ -3,7 +3,7 @@
 interface IbcTxMsg {
   body: {
     messages: Array<{
-      "@type": string;
+      '@type': string;
       source_port: string;
       source_channel: string;
       token: { denom: string; amount: string };
@@ -50,7 +50,7 @@ export async function constructIbcTxMsg({
     body: {
       messages: [
         {
-          "@type": "/ibc.applications.transfer.v1.MsgTransfer",
+          '@type': '/ibc.applications.transfer.v1.MsgTransfer',
           source_port: sourcePort,
           source_channel: sourceChannel,
           token,
@@ -67,9 +67,9 @@ export async function constructIbcTxMsg({
       signer_infos: [],
       fee: {
         amount: [],
-        gas_limit: "200000",
-        payer: "",
-        granter: "",
+        gas_limit: '200000',
+        payer: '',
+        granter: '',
       },
     },
     signatures: [],

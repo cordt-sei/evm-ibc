@@ -1,6 +1,6 @@
 // src/components/api/fetchIbcInfo
 
-import { API_BASE_URL } from "./config";
+import { API_BASE_URL } from './config';
 
 interface IbcInfo {
   clientId: string;
@@ -10,8 +10,13 @@ interface IbcInfo {
   revision_height: string;
 }
 
-export async function fetchIbcInfo(channelId: string, portId: string): Promise<IbcInfo> {
-  const clientStateResponse = await fetch(`${API_BASE_URL}/ibc/core/channel/v1/channels/${channelId}/ports/${portId}/client_state`);
+export async function fetchIbcInfo(
+  channelId: string,
+  portId: string
+): Promise<IbcInfo> {
+  const clientStateResponse = await fetch(
+    `${API_BASE_URL}/ibc/core/channel/v1/channels/${channelId}/ports/${portId}/client_state`
+  );
   const clientStateData: {
     proof_height: {
       revision_number: string;
@@ -19,7 +24,9 @@ export async function fetchIbcInfo(channelId: string, portId: string): Promise<I
     };
   } = await clientStateResponse.json();
 
-  const connectionResponse = await fetch(`${API_BASE_URL}/ibc/core/connection/v1/connections/${channelId}`);
+  const connectionResponse = await fetch(
+    `${API_BASE_URL}/ibc/core/connection/v1/connections/${channelId}`
+  );
   const connectionData: {
     connection: {
       client_id: string;
@@ -33,9 +40,9 @@ export async function fetchIbcInfo(channelId: string, portId: string): Promise<I
   return {
     clientId: connectionData.connection.client_id,
     counterpartyClientId: connectionData.connection.counterparty.client_id,
-    counterpartyConnectionId: connectionData.connection.counterparty.connection_id,
+    counterpartyConnectionId:
+      connectionData.connection.counterparty.connection_id,
     revision_number: clientStateData.proof_height.revision_number,
     revision_height: clientStateData.proof_height.revision_height,
   };
-  
 }
