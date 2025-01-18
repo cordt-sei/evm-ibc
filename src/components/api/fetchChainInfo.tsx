@@ -63,7 +63,7 @@ export async function fetchChainInfo(
     chainId,
     chainName: registryData.chain_name,
     staking: registryData.staking?.staking_tokens[0]?.denom,
-    slip44: registryData.slip44,
+    slip44: registryData.slip44 ?? 0,
     chainData: registryData,
   };
 }

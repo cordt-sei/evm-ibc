@@ -6,8 +6,8 @@ interface IbcInfo {
   clientId: string;
   counterpartyClientId: string;
   counterpartyConnectionId: string;
-  revisionNumber: string;
-  revisionHeight: string;
+  revision_number: string;
+  revision_height: string;
 }
 
 export async function fetchIbcInfo(channelId: string, portId: string): Promise<IbcInfo> {
@@ -18,9 +18,6 @@ export async function fetchIbcInfo(channelId: string, portId: string): Promise<I
       revision_height: string;
     };
   } = await clientStateResponse.json();
-
-  const revisionNumber = clientStateData.proof_height.revision_number;
-  const revisionHeight = clientStateData.proof_height.revision_height;
 
   const connectionResponse = await fetch(`${API_BASE_URL}/ibc/core/connection/v1/connections/${channelId}`);
   const connectionData: {
@@ -37,7 +34,8 @@ export async function fetchIbcInfo(channelId: string, portId: string): Promise<I
     clientId: connectionData.connection.client_id,
     counterpartyClientId: connectionData.connection.counterparty.client_id,
     counterpartyConnectionId: connectionData.connection.counterparty.connection_id,
-    revisionNumber,
-    revisionHeight,
+    revision_number: clientStateData.proof_height.revision_number,
+    revision_height: clientStateData.proof_height.revision_height,
   };
+  
 }

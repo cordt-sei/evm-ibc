@@ -10,7 +10,7 @@ interface IbcTxMsg {
       sender: string;
       receiver: string;
       timeout_height: { revision_number: string; revision_height: string };
-      timeout_timestamp: string;
+      timeout_timestamp: number;
       memo: string;
     }>;
     memo: string;
@@ -35,7 +35,7 @@ export async function constructIbcTxMsg({
   receiver,
   timeoutHeight,
   timeoutTimestamp,
-  memo,
+  memo = '',
 }: {
   sourcePort: string;
   sourceChannel: string;
@@ -43,7 +43,7 @@ export async function constructIbcTxMsg({
   sender: string;
   receiver: string;
   timeoutHeight: { revision_number: string; revision_height: string };
-  timeoutTimestamp: string;
+  timeoutTimestamp: number;
   memo?: string;
 }): Promise<IbcTxMsg> {
   return {
@@ -58,10 +58,10 @@ export async function constructIbcTxMsg({
           receiver,
           timeout_height: timeoutHeight,
           timeout_timestamp: timeoutTimestamp,
-          memo: memo || "",
+          memo,
         },
       ],
-      memo: "",
+      memo,
     },
     auth_info: {
       signer_infos: [],
