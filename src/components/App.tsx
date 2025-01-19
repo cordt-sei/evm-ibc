@@ -1,27 +1,42 @@
-import { useState } from 'react';
+import { SetStateAction, useState } from 'react';
 import WalletConnect from './WalletConnect';
-import TokenList from './TokenList';
+import TokenList, { Token } from './TokenList';
 import TransferForm from './TransferForm';
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { useDynamicContext, useUserWallets, useTokenBalances } from '@dynamic-labs/sdk-react-core';
 
-type Token = {
-  denom: string;
-  channel: string;
-  baseDenom: string;
-  amount: string;
+const WalletList = () => {
+  const userWallets = useUserWallets();
+
+  if (userWallets.length === 0) {
+    return <p>No wallets connected</p>;
+  }
+
+  return (
+    <div>
+      <h2>Connected Wallets:</h2>
+      <ul>
+        {userWallets.map((wallet) => (
+          <li key={wallet.id}>{wallet.address}</li>
+        ))}
+      </ul>
+    </div>
+  );
 };
 
 const App = () => {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const { primaryWallet } = useDynamicContext();
+  
   const walletAddress = primaryWallet?.address;
 
   return (
     <div>
       <h1>IBC Transfer UI</h1>
-      <p>Connected Wallet: {walletAddress || 'No wallet connected'}</p>
+      <p>Connected Wallet: {primaryWallet ? primaryWallet.address : 'No wallet connected'}</p>
       <WalletConnect />
-      <TokenList setSelectedToken={setSelectedToken} />
+      <TokenList setSelectedToken={function (value: SetStateAction<Token | null>): void {
+        throw new Error('Function not implemented.');
+      } } />
       <TransferForm />
     </div>
   );

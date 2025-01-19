@@ -39,16 +39,14 @@ export default {
     ],
   },
   devServer: {
-    headers: {
-      'Access-Control-Allow-Origin': '*', },
-    port: 8080, // Ensure this matches the WebSocket URL
+    port: 8080,
     host: 'localhost',
     hot: true,
     open: true,
     client: {
       webSocketURL: 'ws://localhost:8080/ws',
     },
-  },  
+  },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
     new webpack.DefinePlugin({

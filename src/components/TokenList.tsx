@@ -16,18 +16,33 @@ const TokenList = ({
   setSelectedToken: React.Dispatch<React.SetStateAction<Token | null>>;
 }) => {
   const [tokens, setTokens] = useState<Token[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const { primaryWallet } = useDynamicContext();
   const walletAddress = primaryWallet?.address;
 
   useEffect(() => {
+    console.log('Wallet Address:', walletAddress);
+  }, [walletAddress]);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchTokens = async () => {
       if (!walletAddress) {
-        console.warn('Wallet address is missing or invalid.');
+        setError('No wallet address detected.');
         return;
       }
 
+      setIsLoading(true);
+      setError(null);
+
       try {
-        const balances = await fetchWalletBalances(walletAddress);
+        const balances = await fetchWalletBalances(walletAddress, {
+          signal: abortController.signal, // Use the abort signal for cancellation
+        });
+
         const tokens = await Promise.all(
           balances.map(async (balance) => {
             try {
@@ -45,35 +60,48 @@ const TokenList = ({
           })
         );
 
-        // Filter out null values and set tokens
         setTokens(tokens.filter((token): token is Token => token !== null));
-
-        // Automatically select the first token
         if (tokens.length > 0) {
           setSelectedToken(tokens[0]);
         }
       } catch (err) {
-        console.error('Error fetching wallet balances:', err);
+        if (err instanceof Error) {
+          console.error('Failed to fetch tokens:', err.message);
+          setError(err.message || 'Failed to fetch tokens. Please try again.');
+        } else {
+          console.error('Unexpected error:', err);
+          setError('An unknown error occurred. Please try again.');
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchTokens();
+
+    return () => {
+      abortController.abort(); // Clean up by aborting the fetch
+    };
   }, [walletAddress, setSelectedToken]);
 
   return (
     <div>
       <h2>Token List</h2>
-      <ul>
-        {tokens.length === 0 ? (
-          <li>No tokens found</li>
-        ) : (
-          tokens.map((token, index) => (
+      {isLoading ? (
+        <p>Loading tokens...</p>
+      ) : error ? (
+        <p style={{ color: 'red' }}>{error}</p>
+      ) : tokens.length === 0 ? (
+        <p>No tokens found</p>
+      ) : (
+        <ul>
+          {tokens.map((token, index) => (
             <li key={index}>
               {token.baseDenom} ({token.amount}) - Channel: {token.channel}
             </li>
-          ))
-        )}
-      </ul>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
