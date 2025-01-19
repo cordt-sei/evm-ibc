@@ -39,9 +39,7 @@ const TokenList = ({
       setError(null);
 
       try {
-        const balances = await fetchWalletBalances(walletAddress, {
-          signal: abortController.signal, // Use the abort signal for cancellation
-        });
+        const balances = await fetchWalletBalances('walletAddress');
 
         const tokens = await Promise.all(
           balances.map(async (balance) => {

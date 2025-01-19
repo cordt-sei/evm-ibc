@@ -1,31 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { dynamicClient } from './api/dynamicClient'; // Import the dynamicClient
 
 const WalletConnect = () => {
-  const { primaryWallet, user, sdkHasLoaded } = useDynamicContext();
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const { primaryWallet, user } = useDynamicContext();
 
-  useEffect(() => {
-    if (primaryWallet) {
-      setWalletAddress(primaryWallet.address || null);
-    } else {
-      setWalletAddress(null);
-    }
-  }, [primaryWallet]);
-
-  const handleAuthModal = () => {
-    if (window.dynamicClient && window.dynamicClient.ui) {
-      window.dynamicClient.ui.auth.show();
-    } else {
-      alert('Dynamic client is not properly initialized.');
+  const handleConnect = async () => {
+    try {
+      await dynamicClient.ui.auth.show();
+      console.log('Wallet connected:', primaryWallet?.address);
+    } catch (err) {
+      console.error('Failed to connect wallet:', err);
     }
   };
 
-  const handleUserProfileModal = () => {
-    if (window.dynamicClient && window.dynamicClient.ui) {
-      window.dynamicClient.ui.userProfile.show();
-    } else {
-      alert('Dynamic client is not properly initialized.');
+  const handleDisconnect = async () => {
+    try {
+      await dynamicClient.ui.auth.hide();
+      console.log('Wallet disconnected');
+    } catch (err) {
+      console.error('Failed to disconnect wallet:', err);
     }
   };
 
@@ -33,20 +27,15 @@ const WalletConnect = () => {
     <div>
       <h2>Wallet Connection</h2>
       <p>
-        <strong>SDK Loaded:</strong> {sdkHasLoaded ? 'Yes' : 'No'}
-      </p>
-      <p>
         <strong>Connected Wallet:</strong>{' '}
-        {walletAddress || 'No wallet connected'}
+        {primaryWallet ? primaryWallet.address : 'No wallet connected'}
       </p>
       <p>
         <strong>Connected User:</strong>{' '}
         {user ? user.email : 'No user connected'}
       </p>
-      <button onClick={handleAuthModal} style={{ marginRight: '10px' }}>
-        Connect Wallet
-      </button>
-      <button onClick={handleUserProfileModal}>View Profile</button>
+      <button onClick={handleConnect}>Connect Wallet</button>
+      <button onClick={handleDisconnect}>Disconnect Wallet</button>
     </div>
   );
 };

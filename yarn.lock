@@ -683,6 +683,18 @@
   dependencies:
     "@dynamic-labs/logger" "4.2.3"
 
+"@dynamic-labs/client@^4.2.3":
+  version "4.2.3"
+  resolved "https://registry.yarnpkg.com/@dynamic-labs/client/-/client-4.2.3.tgz#a4578d01b2e0e523ef20849be7f9b56d78130b99"
+  integrity sha512-3WUlkG+5zrLRv6nF0IzZFJ/o9Ud1rAOOrreVytva6220Ypo5Y4voDkqfr6qnbyVpvU1t/Pbkn3e8HpukRrq+DQ==
+  dependencies:
+    "@dynamic-labs/assert-package-version" "4.2.3"
+    "@dynamic-labs/logger" "4.2.3"
+    "@dynamic-labs/message-transport" "4.2.3"
+    "@dynamic-labs/types" "4.2.3"
+    "@vue/reactivity" "^3.4.21"
+    eventemitter3 "5.0.1"
+
 "@dynamic-labs/cosmos@^4.2.3":
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/@dynamic-labs/cosmos/-/cosmos-4.2.3.tgz#b0887b34b5cf8895bd9a22dffebae286feafec1a"
@@ -771,6 +783,16 @@
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/@dynamic-labs/logger/-/logger-4.2.3.tgz#9a14985fc5f6f9a42e0115f3cb15b3cb5f2834a7"
   integrity sha512-GA4MfXL+QM9kWYhN5o/OPLCDXzx9ha7tg+4UKgmZIpej2NBl7z4PRkwfJNuRvvEfzx7OHBkqu3M1j5TP1oHpgw==
+
+"@dynamic-labs/message-transport@4.2.3":
+  version "4.2.3"
+  resolved "https://registry.yarnpkg.com/@dynamic-labs/message-transport/-/message-transport-4.2.3.tgz#cb8f5657ee876d8fd2549a46bc6df56e110febe5"
+  integrity sha512-Q2/UJ+G0uP1ePGJRYry8s1DX1iwRGSslkFrXxp3yuBKQvWmZYakrTtRai/IeYKGOMmh6Ot0dkF+TrGWXIibRlg==
+  dependencies:
+    "@dynamic-labs/sdk-api-core" "0.0.586"
+    "@dynamic-labs/types" "4.2.3"
+    "@vue/reactivity" "^3.4.21"
+    eventemitter3 "5.0.1"
 
 "@dynamic-labs/multi-wallet@4.2.3":
   version "4.2.3"
@@ -2650,6 +2672,18 @@
   dependencies:
     "@typescript-eslint/types" "8.20.0"
     eslint-visitor-keys "^4.2.0"
+
+"@vue/reactivity@^3.4.21":
+  version "3.5.13"
+  resolved "https://registry.yarnpkg.com/@vue/reactivity/-/reactivity-3.5.13.tgz#b41ff2bb865e093899a22219f5b25f97b6fe155f"
+  integrity sha512-NaCwtw8o48B9I6L1zl2p41OHo/2Z4wqYGGIK1Khu5T7yxrn+ATOixn/Udn2m+6kZKB/J7cuT9DbWWhRxqixACg==
+  dependencies:
+    "@vue/shared" "3.5.13"
+
+"@vue/shared@3.5.13":
+  version "3.5.13"
+  resolved "https://registry.yarnpkg.com/@vue/shared/-/shared-3.5.13.tgz#87b309a6379c22b926e696893237826f64339b6f"
+  integrity sha512-/hnE/qP5ZoGpol0a5mDi45bOd7t3tjYJBjsgCsivow7D48cJeV5l05RD82lPqi7gRiphZM37rnhW1l6ZoCNNnQ==
 
 "@walletconnect/core@2.11.2":
   version "2.11.2"

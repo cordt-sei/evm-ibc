@@ -8,7 +8,8 @@ interface WalletBalance {
 }
 
 export async function fetchWalletBalances(
-address: string, p0: { signal: AbortSignal; }): Promise<WalletBalance[]> {
+  address: string
+): Promise<WalletBalance[]> {
   const response = await fetch(
     `${API_BASE_URL}/cosmos/bank/v1beta1/balances/${address}`
   );

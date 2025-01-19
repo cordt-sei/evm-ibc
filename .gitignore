@@ -45,3 +45,4 @@ next-env.d.ts
 .prettierrc
 .eslintrc.json
 webpack.config.js
+dynamic_doctor*
