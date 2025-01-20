@@ -1,32 +1,49 @@
+// App.tsx
+
 import React, { useState, useEffect } from 'react';
 import TokenList, { Token } from './TokenList';
 import { fetchWalletBalances } from './api/fetchWalletBalances';
 import { decodeDenom } from './api/decodeIbcDenom';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 
-interface AppProps {
-  selectedToken: Token | null;
-  setSelectedToken: React.Dispatch<React.SetStateAction<Token | null>>;
-}
-
-const App: React.FC<AppProps> = ({ selectedToken, setSelectedToken }) => {
+const App: React.FC = () => {
   const [walletBalances, setWalletBalances] = useState<Token[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Dynamic SDK Context
   const { primaryWallet, setShowAuthFlow, handleLogOut } = useDynamicContext();
   const walletAddress = primaryWallet?.address;
 
   useEffect(() => {
-    if (!walletAddress) return;
+    const environmentId = process.env.REACT_APP_ENVIRONMENT_ID;
+    if (!environmentId) {
+      console.error('Environment ID is not set. Dynamic SDK may not work correctly.');
+    } else {
+      console.log('Using environment ID:', environmentId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (walletAddress) {
+      console.log('Wallet connected:', walletAddress);
+      setWalletConnected(true);
+    } else {
+      setWalletConnected(false);
+    }
+  }, [walletAddress]);
+
+  useEffect(() => {
+    if (!walletConnected) return;
 
     const fetchBalances = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const balances = await fetchWalletBalances(walletAddress);
+        console.log('Fetching balances for wallet:', walletAddress);
+        const balances = await fetchWalletBalances(walletAddress!);
 
         const tokens = await Promise.all(
           balances.map(async (balance) => {
@@ -45,34 +62,36 @@ const App: React.FC<AppProps> = ({ selectedToken, setSelectedToken }) => {
           })
         );
 
-        setWalletBalances(
-          tokens.filter((token): token is Token => token !== null)
-        );
+        const filteredTokens = tokens.filter((token): token is Token => token !== null);
+        setWalletBalances(filteredTokens);
+        if (filteredTokens.length > 0) {
+          setSelectedToken(filteredTokens[0]);
+        }
       } catch (err) {
-        setError('Failed to fetch wallet balances. Please try again.');
-        console.error(err);
+        console.error('Error fetching balances:', err);
+        setError('Failed to fetch balances. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchBalances();
-  }, [walletAddress]);
+  }, [walletConnected, walletAddress]);
 
-  const handleTokenSelection = (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    const selectedDenom = event.target.value;
-    const token = walletBalances.find((t) => t.denom === selectedDenom);
-    setSelectedToken(token || null);
+  const handleConnectWallet = async () => {
+    try {
+      console.log('Opening wallet connection...');
+      setShowAuthFlow(true);
+    } catch (err) {
+      console.error('Error connecting wallet:', err);
+      setError('Failed to connect wallet. Please try again.');
+    }
   };
 
   return (
     <div>
       <h1>IBC Transfer UI</h1>
-
-      {/* Wallet Connection */}
-      {walletAddress ? (
+      {walletConnected ? (
         <div>
           <p>
             <strong>Connected Wallet:</strong> {walletAddress}
@@ -82,43 +101,12 @@ const App: React.FC<AppProps> = ({ selectedToken, setSelectedToken }) => {
       ) : (
         <div>
           <p>No wallet connected. Please connect a wallet.</p>
-          <button onClick={() => setShowAuthFlow(true)}>Connect Wallet</button>
+          <button onClick={handleConnectWallet}>Connect Wallet</button>
         </div>
       )}
-
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {loading && <p>Loading wallet balances...</p>}
-
-      {/* Token Dropdown */}
-      {!loading && walletBalances.length > 0 && (
-        <div>
-          <h2>Select Token</h2>
-          <select onChange={handleTokenSelection}>
-            <option value="">-- Select a Token --</option>
-            {walletBalances.map((token) => (
-              <option key={token.denom} value={token.denom}>
-                {token.baseDenom} ({token.amount})
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Selected Token */}
-      {selectedToken && (
-        <div>
-          <h3>Selected Token:</h3>
-          <p>
-            <strong>Base Denom:</strong> {selectedToken.baseDenom}
-          </p>
-          <p>
-            <strong>Amount:</strong> {selectedToken.amount}
-          </p>
-        </div>
-      )}
-
-      {/* Transfer Form */}
-      <TokenList setSelectedToken={setSelectedToken} />
+      <TokenList tokens={walletBalances} isLoading={loading} error={error} setSelectedToken={setSelectedToken} />
     </div>
   );
 };

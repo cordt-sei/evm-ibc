@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { constructIbcTxMsg } from './api/constructIbcTxMsg';
 import { fetchIbcInfo } from './api/fetchIbcInfo';
 
-type Token = {
+export type Token = {
   denom: string;
   channel: string;
   baseDenom: string;
@@ -11,9 +11,10 @@ type Token = {
 
 interface TransferFormProps {
   selectedToken: Token;
+  walletAddress: string;
 }
 
-const TransferForm: React.FC<TransferFormProps> = ({ selectedToken }) => {
+const TransferForm: React.FC<TransferFormProps> = ({ selectedToken, walletAddress }) => {
   const [receiver, setReceiver] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,7 @@ const TransferForm: React.FC<TransferFormProps> = ({ selectedToken }) => {
     setError(null);
 
     try {
-      const timeoutTimestamp = (Date.now() + 10 * 60 * 1000) * 1_000_000;
+      const timeoutTimestamp = (Date.now() + 10 * 60 * 1000) * 1_000_000; // 10 minutes timeout
       const ibcInfo = await fetchIbcInfo(selectedToken.channel, 'transfer');
       const { revision_number, revision_height } = ibcInfo;
 
@@ -37,7 +38,7 @@ const TransferForm: React.FC<TransferFormProps> = ({ selectedToken }) => {
         sourcePort: 'transfer',
         sourceChannel: selectedToken.channel,
         token: { denom: selectedToken.denom, amount },
-        sender: 'walletAddress',
+        sender: walletAddress,
         receiver,
         timeoutHeight: {
           revision_number,
