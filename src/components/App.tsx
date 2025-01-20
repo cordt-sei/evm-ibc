@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import TokenList, { Token } from './TokenList';
+import TransferForm from './TransferForm';
 import { fetchWalletBalances } from './api/fetchWalletBalances';
 import { decodeDenom } from './api/decodeIbcDenom';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
@@ -107,6 +108,9 @@ const App: React.FC = () => {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {loading && <p>Loading wallet balances...</p>}
       <TokenList tokens={walletBalances} isLoading={loading} error={error} setSelectedToken={setSelectedToken} />
+      {selectedToken && walletAddress && (
+        <TransferForm selectedToken={selectedToken} walletAddress={walletAddress} />
+      )}
     </div>
   );
 };

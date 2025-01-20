@@ -1,3 +1,5 @@
+// WalletConnect.tsx
+
 import React from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { dynamicClient } from './api/dynamicClient'; // Import the dynamicClient

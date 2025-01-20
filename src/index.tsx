@@ -1,3 +1,4 @@
+// index.tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './components/App';
@@ -16,11 +17,6 @@ root.render(
       environmentId: process.env.REACT_APP_ENVIRONMENT_ID || '',
     }}
   >
-    <App
-      selectedToken={null}
-      setSelectedToken={function (): void {
-        throw new Error('Function not implemented.');
-      }}
-    />
+    <App />
   </DynamicContextProvider>
 );
