@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EVM-IBC Return Transfer
 
-## Getting Started
+Simplified EVM wallet-based IBC token return transfer interface. Allows users to send IBC tokens back to their origin chains through the original receiving channel.
 
-First, run the development server:
+## Features
+
+- EVM wallet integration via Dynamic SDK
+- Automatic Cosmos address association
+- IBC token detection and validation
+- Single-hop validation (prevents multi-channel transfers)
+- Keplr wallet integration for destination addresses
+- Chain Registry integration for denomination display
+- Gas estimation and EIP-1559 support
+
+## Prerequisites
+
+- Node.js >=16
+- Yarn
+- MetaMask or other EVM wallet
+- Keplr wallet (optional)
+
+## Setup
 
 ```bash
-npm run dev
-# or
+# Install dependencies
+yarn install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your configuration
+
+# Start development server
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+yarn build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+REACT_APP_SEI_RPC_URL=        # SEI EVM RPC endpoint
+REACT_APP_ENVIRONMENT_ID=      # Dynamic SDK environment ID
+REACT_APP_CHAIN_ID=           # SEI chain ID (e.g. atlantic-2)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Usage Flow
 
-## Learn More
+- Connect EVM wallet
+- System fetches associated Cosmos wallet
+- Retrieves IBC token balances
+- Validates tokens are single-hop transfers
+- Decodes IBC denominations
+- Displays returnable tokens
+- Select token and input destination
+- System constructs IBC transfer with 10-minute timeout
+- Execute transfer through IBC precompile
 
-To learn more about Next.js, take a look at the following resources:
+## Development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Run tests
+yarn test
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Type checking
+yarn typecheck
 
-## Deploy on Vercel
+# Lint
+yarn lint
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Format
+yarn lint:fix
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Analyze bundle
+yarn analyze
+```
+
+## Security
+
+- Only allows return transfers through original receiving channel
+- Validates bech32 addresses against expected prefix
+- Prevents multi-hop token transfers
+- Implements timeout handling
+
+## License
+
+**MIT**
