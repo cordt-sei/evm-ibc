@@ -1,48 +1,46 @@
-// TokenList.tsx
+// src/components/TokenList.tsx
 import React from 'react';
+import { IBCToken } from '../types';
+import { getTokenDisplayInfo } from '../utils/tokenDisplay';
 
-export type Token = {
-  denom: string;
-  channel: string;
-  baseDenom: string;
-  amount: string;
-};
+interface TokenListProps {
+  tokens: IBCToken[];
+  isLoading: boolean;
+  error: string | null;
+  setSelectedToken: (token: IBCToken) => void;
+}
 
-const TokenList = ({
+const TokenList: React.FC<TokenListProps> = ({
   tokens,
   isLoading,
   error,
   setSelectedToken,
-}: {
-  tokens: Token[];
-  isLoading: boolean;
-  error: string | null;
-  setSelectedToken: React.Dispatch<React.SetStateAction<Token | null>>;
-}) => {
-  return (
-    <div>
-      <h2>Token List</h2>
-      {isLoading ? (
-        <p>Loading tokens...</p>
-      ) : error ? (
-        <p style={{ color: 'red' }}>{error}</p>
-      ) : tokens.length === 0 ? (
-        <p>No tokens found</p>
-      ) : (
-        <ul>
-          {tokens.map((token, index) => (
-            <li
-              key={index}
-              onClick={() => setSelectedToken(token)}
-              style={{ cursor: 'pointer' }}
-            >
-              {token.baseDenom} ({token.amount}) - Channel: {token.channel}
+}) => (
+  <div>
+    <h2>Returnable IBC Tokens</h2>
+    {isLoading ? (
+      <p>Loading tokens...</p>
+    ) : error ? (
+      <p className="error">{error}</p>
+    ) : tokens.length === 0 ? (
+      <p>No returnable IBC tokens found</p>
+    ) : (
+      <ul>
+        {tokens.map((token, index) => {
+          const { symbol, originChain } = getTokenDisplayInfo(token);
+          return (
+            <li key={index} onClick={() => setSelectedToken(token)}>
+              {symbol} - {token.balance}
+              <div className="token-info">
+                <small>Origin: {originChain}</small>
+                <small>Channel: {token.channel}</small>
+              </div>
             </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
+          );
+        })}
+      </ul>
+    )}
+  </div>
+);
 
 export default TokenList;

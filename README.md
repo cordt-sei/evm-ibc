@@ -1,18 +1,87 @@
-# EVM-IBC
+# EVM-IBC Return Transfer
 
-Extremely simple and limited use-case EVM-signer IBC transfer (WIP, POC)
+Simplified EVM wallet-based IBC token return transfer interface. Allows users to send IBC tokens back to their origin chains through the original receiving channel.
 
-## Basic Workflow
+## Features
 
-- user connects evm wallet
-- fetch associated cosmos wallet
-- fetch bank balances
-- fetch pointer for any ibc tokens in wallet
-- decode and translate any ibc denoms, pull channel-id and base denom w/ regex
-- pull client-id, channel-id, counterparty chain-id and underlying asset denom (for UI use only)
-- generate the list of eligible assets to transfer
-- user selects token
-- pull revn number + height from relevant client state
-- construct ibc tx message with timeout of +10min from current time
+- EVM wallet integration via Dynamic SDK
+- Automatic Cosmos address association
+- IBC token detection and validation
+- Single-hop validation (prevents multi-channel transfers)
+- Keplr wallet integration for destination addresses
+- Chain Registry integration for denomination display
+- Gas estimation and EIP-1559 support
 
-Only allows sending a given token back over the channel from whence it came
+## Prerequisites
+
+- Node.js >=16
+- Yarn
+- MetaMask or other EVM wallet
+- Keplr wallet (optional)
+
+## Setup
+
+```bash
+# Install dependencies
+yarn install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your configuration
+
+# Start development server
+yarn dev
+
+# Build for production
+yarn build
+```
+
+## Environment Variables
+
+```
+REACT_APP_SEI_RPC_URL=        # SEI EVM RPC endpoint
+REACT_APP_ENVIRONMENT_ID=      # Dynamic SDK environment ID
+REACT_APP_CHAIN_ID=           # SEI chain ID (e.g. atlantic-2)
+```
+
+## Usage Flow
+
+- Connect EVM wallet
+- System fetches associated Cosmos wallet
+- Retrieves IBC token balances
+- Validates tokens are single-hop transfers
+- Decodes IBC denominations
+- Displays returnable tokens
+- Select token and input destination
+- System constructs IBC transfer with 10-minute timeout
+- Execute transfer through IBC precompile
+
+## Development
+
+```bash
+# Run tests
+yarn test
+
+# Type checking
+yarn typecheck
+
+# Lint
+yarn lint
+
+# Format
+yarn lint:fix
+
+# Analyze bundle
+yarn analyze
+```
+
+## Security
+
+- Only allows return transfers through original receiving channel
+- Validates bech32 addresses against expected prefix
+- Prevents multi-hop token transfers
+- Implements timeout handling
+
+## License
+
+**MIT**

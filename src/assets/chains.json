@@ -1,0 +1,10 @@
+{
+  "sei": {
+    "logo": "sei.svg",
+    "explorers": ["https://seiscan.app"]
+  },
+  "cosmos": {
+    "logo": "cosmos.svg", 
+    "explorers": ["https://mintscan.io/cosmos"]
+  }
+}

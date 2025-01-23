@@ -1,85 +1,92 @@
-// TransferForm.tsx
-
-import React, { useState } from 'react';
-import { constructIbcTxMsg } from './api/constructIbcTxMsg';
-import { fetchIbcInfo } from './api/fetchIbcInfo';
-
-export type Token = {
-  denom: string;
-  channel: string;
-  baseDenom: string;
-  amount: string;
-};
+// src/components/TransferForm.tsx
+import React, { useState, useEffect } from 'react';
+import { JsonRpcProvider } from 'ethers';
+import { useChainInfo } from '../hooks/useChainInfo';
+import { useTransactionStatus } from '../hooks/useTransactionStatus';
+import { validateAddress } from '../utils/addressValidation';
+import { executeTransfer } from '../contracts/ibcPrecompile';
+import { IBCToken } from '../types';
+import WalletSuggestion from './WalletSuggestion';
 
 interface TransferFormProps {
-  selectedToken: Token;
+  selectedToken: IBCToken;
   walletAddress: string;
 }
 
-const TransferForm: React.FC<TransferFormProps> = ({ selectedToken, walletAddress }) => {
+const TransferForm: React.FC<TransferFormProps> = ({
+  selectedToken,
+  walletAddress,
+}) => {
   const [receiver, setReceiver] = useState('');
   const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { chainInfo, fetchChainInfo } = useChainInfo();
+  const { status, handleError, handleSuccess, setPending } = useTransactionStatus();
+  const provider = new JsonRpcProvider(process.env.REACT_APP_SEI_RPC_URL);
 
-  const submitTransfer = async () => {
-    if (!receiver || !amount) {
-      setError('Please fill out all fields.');
-      return;
+  useEffect(() => {
+    if (selectedToken) {
+      fetchChainInfo(selectedToken.channel, 'transfer');
     }
+  }, [selectedToken]);
 
-    setLoading(true);
-    setError(null);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chainInfo.get(selectedToken.channel)) return;
 
     try {
-      const timeoutTimestamp = (Date.now() + 10 * 60 * 1000) * 1_000_000; // 10 minutes timeout
-      const ibcInfo = await fetchIbcInfo(selectedToken.channel, 'transfer');
-      const { revision_number, revision_height } = ibcInfo;
-
-      const tx = await constructIbcTxMsg({
-        sourcePort: 'transfer',
-        sourceChannel: selectedToken.channel,
-        token: { denom: selectedToken.denom, amount },
-        sender: walletAddress,
-        receiver,
-        timeoutHeight: {
-          revision_number,
-          revision_height,
-        },
+      const timeoutTimestamp = BigInt(Date.now() * 1_000_000) + BigInt(600 * 1_000_000_000);
+      const tx = await executeTransfer({
+        toAddress: receiver,
+        port: 'transfer',
+        channel: selectedToken.channel,
+        denom: selectedToken.denom,
+        amount: BigInt(amount),
+        revisionNumber: 1,
+        revisionHeight: BigInt(await provider.getBlockNumber()) + BigInt(1500),
         timeoutTimestamp,
-        memo: '',
-      });
+        memo: ''
+      }, provider, { gasLimit: BigInt(2000000) });
 
-      console.log('Constructed IBC Tx:', tx);
-      alert('Transaction submitted successfully!');
-    } catch (err) {
-      console.error('Error submitting transaction:', err);
-      setError('Transaction failed.');
-    } finally {
-      setLoading(false);
+      setPending(tx.hash);
+      const receipt = await tx.wait();
+      handleSuccess(receipt);
+    } catch (error) {
+      handleError(error as Error);
     }
   };
 
+  const chainData = chainInfo.get(selectedToken.channel);
+
   return (
-    <div>
-      <h2>Transfer Form</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <input
-        type="text"
-        placeholder="Receiver Address"
-        value={receiver}
-        onChange={(e) => setReceiver(e.target.value)}
-      />
-      <input
-        type="number"
-        placeholder="Amount"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-      />
-      <button onClick={submitTransfer} disabled={loading}>
-        {loading ? 'Submitting...' : 'Submit Transfer'}
-      </button>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <h2>Return IBC Token</h2>
+      {chainData && (
+        <>
+          <WalletSuggestion
+            chain={chainData.chainData}
+            onWalletSelect={setReceiver}
+          />
+          <input
+            value={receiver}
+            onChange={(e) => setReceiver(e.target.value)}
+            placeholder={`${chainData.bech32Prefix}... address`}
+          />
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="Amount"
+          />
+          <button 
+            type="submit" 
+            disabled={!validateAddress(receiver, chainData) || status.status === 'pending'}
+          >
+            {status.status === 'pending' ? 'Processing...' : 'Return Token'}
+          </button>
+          {status.error && <p className="error">{status.error.message}</p>}
+        </>
+      )}
+    </form>
   );
 };
 
