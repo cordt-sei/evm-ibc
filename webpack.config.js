@@ -4,96 +4,110 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import Dotenv from 'dotenv-webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import { fileURLToPath } from 'url';
+import TerserPlugin from 'terser-webpack-plugin';
 
-// Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Create the webpack configuration
 export default {
-  // Entry point for your application
   entry: './src/index.tsx',
-
-  // Output configuration for webpack build
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].[contenthash].js',
-    clean: true // Clean the output directory before emit
+    clean: true
   },
-
-  // Module rules for processing different file types
   module: {
     rules: [
-      // TypeScript and React files
       {
         test: /\.(ts|tsx)$/,
         exclude: /node_modules/,
-        use: 'ts-loader'
+        use: {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true
+          }
+        }
       },
-      // Add support for CSS (useful for styling)
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader']
       }
     ]
   },
-
-  // Configure how modules are resolved
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.js', '.jsx'],
     alias: {
-      '@': path.resolve(__dirname, 'src')
+      '@': path.resolve(__dirname, 'src'),
+      'lodash-es': 'lodash'
     }
   },
-
-  // Webpack plugins
   plugins: [
-    // Generate HTML file with injected bundles
     new HtmlWebpackPlugin({
       template: './src/public/index.html',
-      inject: 'body'
+      inject: true,
+      minify: {
+        removeComments: true,
+        collapseWhitespace: true
+      }
     }),
-    // Load environment variables
     new Dotenv(),
-    // Bundle analyzer - only enabled when analyzing
-    process.env.ANALYZE === 'true' ? new BundleAnalyzerPlugin({
-      analyzerMode: 'static',
-      reportFilename: 'bundle-report.html',
-      generateStatsFile: true,
-      statsFilename: 'stats.json'
-    }) : null
-  ].filter(Boolean), // Remove null plugins
-
-  // Development server configuration
+    process.env.ANALYZE === 'true' && new BundleAnalyzerPlugin()
+  ].filter(Boolean),
+  optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin({
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          dead_code: true
+        }
+      }
+    })],
+    splitChunks: {
+      chunks: 'all',
+      maxInitialRequests: 25,
+      minSize: 20000,
+      cacheGroups: {
+        default: false,
+        defaultVendors: false,
+        framework: {
+          name: 'framework',
+          chunks: 'all',
+          test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+          priority: 40,
+          enforce: true
+        },
+        chainRegistry: {
+          test: /[\\/]node_modules[\\/]chain-registry[\\/]/,
+          name: 'chain-registry',
+          chunks: 'async',
+          priority: 30
+        },
+        dynamicLabs: {
+          test: /[\\/]node_modules[\\/]@dynamic-labs[\\/]/,
+          name: 'dynamic-labs',
+          chunks: 'async',
+          priority: 30
+        },
+        commons: {
+          name: 'commons',
+          minChunks: 2,
+          priority: 20,
+          chunks: 'async',
+          reuseExistingChunk: true
+        }
+      }
+    },
+    runtimeChunk: 'single'
+  },
+  performance: {
+    hints: false
+  },
   devServer: {
     historyApiFallback: true,
     port: 3000,
     hot: true,
-    open: true,
-    client: {
-      overlay: {
-        errors: true,
-        warnings: false
-      }
-    }
+    open: true
   },
-
-  // Development tools
-  devtool: process.env.NODE_ENV === 'production' ? 'source-map' : 'eval-source-map',
-
-  // Optimization configuration
-  optimization: {
-    splitChunks: {
-      chunks: 'all',
-      minSize: 20000,
-      maxSize: 244000,
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all'
-        }
-      }
-    }
-  }
+  devtool: process.env.NODE_ENV === 'production' ? 'source-map' : 'eval-source-map'
 };

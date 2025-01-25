@@ -1,5 +1,5 @@
 // src/types/chain.ts
-import type { Chain as RegistryChain } from '@chain-registry/types';
+import type { Chain as RegistryChain, Asset } from '@chain-registry/types';
 import { Height } from './ibc';
 
 export interface ChainInfo {
@@ -19,4 +19,8 @@ export interface ChainResponse {
       latest_height: Height;
     }
   }
+}
+
+export interface ChainWithAssets extends RegistryChain {
+  assets: Asset[];
 }

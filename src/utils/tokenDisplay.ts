@@ -1,5 +1,7 @@
 // src/utils/tokenDisplay.ts
-import { IBCToken } from '../types';
+import type { IBCToken } from '../types';
+import type { Chain, Asset } from '@chain-registry/types';
+import type { ChainWithAssets } from '../types/chain';
 import { chains } from 'chain-registry';
 
 interface TokenDisplay {
@@ -11,14 +13,19 @@ interface TokenDisplay {
 export function getTokenDisplayInfo(token: IBCToken): TokenDisplay {
   const baseDenom = token.trace.base_denom;
   const channel = token.channel;
-  
-  const chainData = chains.find(c => 
-    c.currencies.some(curr => curr.base === baseDenom)
-  );
 
-  return {
-    symbol: chainData?.currencies.find(c => c.base === baseDenom)?.display || baseDenom,
-    originChain: chainData?.chain_name || 'Unknown Chain',
-    channel
-  };
+  const chainData = chains.find((chain): chain is ChainWithAssets => {
+    if (!('assets' in chain)) return false;
+    const chainAssets = chain.assets as Asset[];
+    return chainAssets.some(asset => 
+      asset.base === baseDenom || 
+      asset.display === baseDenom
+    );
+  });
+
+  const defaultName = baseDenom.replace('u', '').toUpperCase();
+  const symbol = chainData?.assets[0]?.symbol || defaultName;
+  const originChain = chainData?.pretty_name || defaultName;
+
+  return { symbol, originChain, channel };
 }

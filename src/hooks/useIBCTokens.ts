@@ -1,19 +1,28 @@
 // src/hooks/useIBCTokens.ts
 import { useState, useEffect } from 'react';
-import { IBCToken, WalletBalance } from '../types';
+import { IBCToken } from '../types';
 import { validateDenomTrace } from '../utils/denomValidation';
-import { fetchWalletBalances } from '../api/fetchWalletBalances';
+import { fetchDenomTrace, fetchBalances, resolveCosmosAddress } from '../utils/api';
 
-export function useIBCTokens(address: string) {
+export function useIBCTokens(evmAddress: string) {
   const [tokens, setTokens] = useState<IBCToken[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTokens = async () => {
+      if (!evmAddress) return;
+      
       setLoading(true);
+      setError(null);
+      
       try {
-        const balances = await fetchWalletBalances(address);
+        const cosmosAddress = await resolveCosmosAddress(evmAddress);
+        console.log('Resolved address:', cosmosAddress);
+        
+        const balances = await fetchBalances(cosmosAddress);
+        console.log('Fetched balances:', balances);
+        
         const ibcTokens = await Promise.all(
           balances
             .filter(balance => balance.denom.startsWith('ibc/'))
@@ -23,7 +32,13 @@ export function useIBCTokens(address: string) {
                 if (!validateDenomTrace(trace)) return null;
 
                 const channel = trace.path.match(/channel-\d+/)?.[0] || '';
-                return { denom: balance.denom, trace, balance: balance.amount, channel, isReturnable: true };
+                return {
+                  denom: balance.denom,
+                  trace,
+                  balance: balance.amount,
+                  channel,
+                  isReturnable: true
+                };
               } catch (err) {
                 console.error(`Error processing ${balance.denom}:`, err);
                 return null;
@@ -31,16 +46,19 @@ export function useIBCTokens(address: string) {
             })
         );
 
-        setTokens(ibcTokens.filter((token): token is IBCToken => token !== null));
+        const validTokens = ibcTokens.filter((token): token is IBCToken => token !== null);
+        console.log('Valid IBC tokens:', validTokens);
+        setTokens(validTokens);
       } catch (err) {
+        console.error('Failed to fetch IBC tokens:', err);
         setError('Failed to fetch IBC tokens');
       } finally {
         setLoading(false);
       }
     };
 
-    if (address) fetchTokens();
-  }, [address]);
+    fetchTokens();
+  }, [evmAddress]);
 
   return { tokens, loading, error };
 }

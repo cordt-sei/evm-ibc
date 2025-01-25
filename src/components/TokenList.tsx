@@ -16,29 +16,44 @@ const TokenList: React.FC<TokenListProps> = ({
   error,
   setSelectedToken,
 }) => (
-  <div>
-    <h2>Returnable IBC Tokens</h2>
+  <div className="max-w-2xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-4">
+    <h2 className="text-2xl font-bold text-gray-800 mb-4">Returnable IBC Tokens</h2>
     {isLoading ? (
-      <p>Loading tokens...</p>
+      <div className="flex justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
     ) : error ? (
-      <p className="error">{error}</p>
+      <div className="bg-red-50 border border-red-200 rounded-md p-4 text-red-700">
+        {error}
+      </div>
     ) : tokens.length === 0 ? (
-      <p>No returnable IBC tokens found</p>
+      <div className="bg-gray-50 rounded-md p-4 text-gray-600">
+        No returnable IBC tokens found in this wallet
+      </div>
     ) : (
-      <ul>
+      <div className="space-y-4">
         {tokens.map((token, index) => {
           const { symbol, originChain } = getTokenDisplayInfo(token);
           return (
-            <li key={index} onClick={() => setSelectedToken(token)}>
-              {symbol} - {token.balance}
-              <div className="token-info">
-                <small>Origin: {originChain}</small>
-                <small>Channel: {token.channel}</small>
+            <div
+              key={index}
+              onClick={() => setSelectedToken(token)}
+              className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="font-medium text-lg text-gray-900">{symbol}</div>
+                  <div className="text-gray-500 text-sm mt-1">Channel: {token.channel}</div>
+                  <div className="text-gray-500 text-sm">Origin: {originChain}</div>
+                </div>
+                <div className="text-right font-mono bg-gray-50 px-3 py-1 rounded">
+                  {parseInt(token.balance).toLocaleString()}
+                </div>
               </div>
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </div>
     )}
   </div>
 );

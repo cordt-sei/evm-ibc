@@ -1,4 +1,5 @@
 // src/hooks/useTransactionMonitor.ts
+
 import { JsonRpcProvider } from 'ethers';
 
 export function useTransactionMonitor(provider: JsonRpcProvider) {
@@ -6,8 +7,9 @@ export function useTransactionMonitor(provider: JsonRpcProvider) {
     try {
       const tx = await provider.getTransaction(hash);
       if (!tx) return false;
+      
       const receipt = await tx.wait();
-      return receipt.status === 1;
+      return receipt?.status === 1 || false;
     } catch {
       return false;
     }

@@ -14,22 +14,32 @@ const App: React.FC = () => {
   const { tokens, loading, error } = useIBCTokens(walletAddress);
 
   return (
-    <div>
-      <h1>IBC Return Transfer</h1>
-      <WalletConnect />
-      {error && <p className="error">{error}</p>}
-      <TokenList 
-        tokens={tokens} 
-        isLoading={loading} 
-        error={error} 
-        setSelectedToken={setSelectedToken}
-      />
-      {selectedToken && walletAddress && (
-        <TransferForm 
-          selectedToken={selectedToken} 
-          walletAddress={walletAddress} 
-        />
-      )}
+    <div className="min-h-screen bg-gray-100 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <header className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            IBC Return Transfer
+          </h1>
+          <WalletConnect />
+        </header>
+        
+        <main>
+          <TokenList 
+            tokens={tokens} 
+            isLoading={loading} 
+            error={error} 
+            setSelectedToken={setSelectedToken}
+          />
+          {selectedToken && walletAddress && (
+            <div className="mt-6">
+              <TransferForm 
+                selectedToken={selectedToken} 
+                walletAddress={walletAddress} 
+              />
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 };
