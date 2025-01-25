@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { DynamicContextProvider } from '@dynamic-labs/sdk-react-core';
 import { EthereumWalletConnectors } from '@dynamic-labs/ethereum';
 import App from './components/App';
+import './styles/globals.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find root element');
