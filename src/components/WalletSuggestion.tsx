@@ -1,8 +1,7 @@
 // src/components/WalletSuggestion.tsx
 import React, { useState } from 'react';
 import { Asset, Chain } from '@chain-registry/types';
-import { ChainInfo, KeplrWindow, KeplrChainInfo, KeplrCurrency } from '../types';
-import { getAssetByDenom } from '@chain-registry/utils';
+import { ChainInfo, KeplrWindow, KeplrChainInfo } from '../types';
 
 interface WalletSuggestionProps {
   chain: ChainInfo;
@@ -10,169 +9,109 @@ interface WalletSuggestionProps {
 }
 
 const WalletSuggestion: React.FC<WalletSuggestionProps> = ({ chain, onWalletSelect }) => {
-  const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [connecting, setConnecting] = useState(false);
   const keplrWindow = window as KeplrWindow;
 
-  const createAssetFromFeeToken = (token: { denom: string; fixed_min_gas_price?: number }, chainName: string): Asset => {
-    // Create a proper Asset structure that matches the Chain Registry schema
-    return {
-      // Required properties for any Chain Registry asset
-      denom_units: [
-        {
-          denom: token.denom,
-          exponent: 0
-        },
-        {
-          denom: token.denom.replace(/^u/, ''),
-          exponent: 6
-        }
-      ],
-      base: token.denom,
-      name: token.denom.replace(/^u/, '').toUpperCase(),
-      display: token.denom.replace(/^u/, ''),
-      symbol: token.denom.replace(/^u/, '').toUpperCase(),
-      type_asset: 'sdk.coin',
-      description: `Native token of ${chainName}`
-    };
-  };
+  const getKeplrFromChain = (chainData: Chain): KeplrChainInfo | null => {
+    const rpcEndpoint = chainData.apis?.rpc?.[0]?.address;
+    const restEndpoint = chainData.apis?.rest?.[0]?.address;
+    const feeDenom = chainData.fees?.fee_tokens?.[0]?.denom;
 
-  const createKeplrCurrency = (denom: string, chainData: Chain): KeplrCurrency | null => {
-    // Create proper asset list structure
-    const assetList = {
-      chain_name: chainData.chain_name,
-      assets: chainData.fees?.fee_tokens?.map(token => 
-        createAssetFromFeeToken(token, chainData.chain_name)
-      ) || []
-    };
-
-    const asset = getAssetByDenom([assetList], denom, chainData.chain_name);
-    if (!asset) return null;
-
-    // Create Keplr currency from the asset
-    return {
-      coinDenom: asset.symbol,
-      coinMinimalDenom: asset.base,
-      coinDecimals: asset.denom_units[1]?.exponent ?? 6,
-      coinGeckoId: asset.coingecko_id
-    };
-  };
-
-  const suggestChain = async () => {
-    setError(null);
-    try {
-      if (!keplrWindow.keplr) {
-        throw new Error('Keplr extension not found');
-      }
-
-      const rpcEndpoint = chain.chainData.apis?.rpc?.[0]?.address;
-      const restEndpoint = chain.chainData.apis?.rest?.[0]?.address;
-      const feeToken = chain.chainData.fees?.fee_tokens?.[0];
-
-      if (!rpcEndpoint || !restEndpoint || !feeToken) {
-        throw new Error('Required chain configuration missing');
-      }
-
-      const feeCurrency = createKeplrCurrency(feeToken.denom, chain.chainData);
-      if (!feeCurrency) {
-        throw new Error('Failed to create currency configuration');
-      }
-
-      const keplrChain: KeplrChainInfo = {
-        chainId: chain.chainId,
-        chainName: chain.chainName,
-        rpc: rpcEndpoint,
-        rest: restEndpoint,
-        bip44: {
-          coinType: chain.slip44,
-        },
-        bech32Config: {
-          bech32PrefixAccAddr: chain.bech32Prefix,
-          bech32PrefixAccPub: `${chain.bech32Prefix}pub`,
-          bech32PrefixValAddr: `${chain.bech32Prefix}valoper`,
-          bech32PrefixValPub: `${chain.bech32Prefix}valoperpub`,
-          bech32PrefixConsAddr: `${chain.bech32Prefix}valcons`,
-          bech32PrefixConsPub: `${chain.bech32Prefix}valconspub`,
-        },
-        currencies: [feeCurrency],
-        feeCurrencies: [{
-          ...feeCurrency,
-          gasPriceStep: {
-            low: feeToken.fixed_min_gas_price || 0.01,
-            average: (feeToken.fixed_min_gas_price || 0.01) * 1.5,
-            high: (feeToken.fixed_min_gas_price || 0.01) * 2,
-          },
-        }],
-        stakeCurrency: feeCurrency,
-      };
-
-      await keplrWindow.keplr.experimentalSuggestChain(keplrChain);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to suggest chain';
-      console.error('Chain suggestion failed:', error);
-      setError(errorMessage);
+    if (!rpcEndpoint || !restEndpoint || !feeDenom) {
+      return null;
     }
+
+    return {
+      chainId: chain.chainId,
+      chainName: chain.chainName,
+      rpc: rpcEndpoint,
+      rest: restEndpoint,
+      bip44: { coinType: chain.slip44 },
+      bech32Config: {
+        bech32PrefixAccAddr: chain.bech32Prefix,
+        bech32PrefixAccPub: `${chain.bech32Prefix}pub`,
+        bech32PrefixValAddr: `${chain.bech32Prefix}valoper`,
+        bech32PrefixValPub: `${chain.bech32Prefix}valoperpub`,
+        bech32PrefixConsAddr: `${chain.bech32Prefix}valcons`,
+        bech32PrefixConsPub: `${chain.bech32Prefix}valconspub`
+      },
+      currencies: [{
+        coinDenom: feeDenom.toUpperCase(),
+        coinMinimalDenom: feeDenom,
+        coinDecimals: 6
+      }],
+      feeCurrencies: [{
+        coinDenom: feeDenom.toUpperCase(),
+        coinMinimalDenom: feeDenom,
+        coinDecimals: 6,
+        gasPriceStep: {
+          low: 0.01,
+          average: 0.025,
+          high: 0.04
+        }
+      }],
+      stakeCurrency: {
+        coinDenom: feeDenom.toUpperCase(),
+        coinMinimalDenom: feeDenom,
+        coinDecimals: 6
+      }
+    };
   };
 
-  const connectWallet = async () => {
-    setConnecting(true);
+  const connectKeplr = async () => {
     setError(null);
+    setConnecting(true);
+    
     try {
       if (!keplrWindow.keplr) {
-        throw new Error('Keplr extension not found');
+        throw new Error('Keplr extension not found. Please install it first.');
       }
 
+      const keplrConfig = getKeplrFromChain(chain.chainData);
+      if (!keplrConfig) {
+        throw new Error('Unable to create Keplr configuration from chain data');
+      }
+
+      await keplrWindow.keplr.experimentalSuggestChain(keplrConfig);
       await keplrWindow.keplr.enable(chain.chainId);
+      
       const offlineSigner = keplrWindow.keplr.getOfflineSigner(chain.chainId);
       const accounts = await offlineSigner.getAccounts();
       
-      if (!accounts[0]) {
-        throw new Error('No accounts found');
+      if (accounts[0]) {
+        onWalletSelect(accounts[0].address);
       }
-      
-      onWalletSelect(accounts[0].address);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to connect wallet';
-      console.error('Wallet connection failed:', error);
-      setError(errorMessage);
+    } catch (err) {
+      console.error('Keplr connection error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to connect to Keplr');
     } finally {
       setConnecting(false);
     }
   };
 
   return (
-    <div className="space-y-4 p-4 border rounded-lg">
-      <p className="text-sm">
-        Connect your {chain.chainName} wallet to auto-fill receiving address
-      </p>
-      
-      <div className="space-x-2">
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-blue-700">
+          Connect your {chain.chainName} wallet to auto-fill receiving address
+        </span>
         <button
-          onClick={suggestChain}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onClick={connectKeplr}
           disabled={connecting}
-        >
-          Add to Keplr
-        </button>
-        
-        <button
-          onClick={connectWallet}
-          disabled={connecting}
-          className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          className={`px-4 py-2 rounded-md text-sm font-medium ${
             connecting
               ? 'bg-gray-300 cursor-not-allowed'
-              : 'text-white bg-blue-600 hover:bg-blue-700'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
           }`}
         >
-          {connecting ? 'Connecting...' : 'Connect Wallet'}
+          {connecting ? 'Connecting...' : 'Connect Keplr'}
         </button>
       </div>
-
       {error && (
-        <p className="text-sm text-red-600">
+        <div className="mt-2 text-sm text-red-600">
           {error}
-        </p>
+        </div>
       )}
     </div>
   );
