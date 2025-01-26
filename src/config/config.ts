@@ -1,17 +1,36 @@
 // src/config/config.ts
 import { Environment, environments } from './environments';
 
-// Validate required environment variables
-const requiredEnvVars = {
-  ENVIRONMENT_ID: process.env.REACT_APP_ENVIRONMENT_ID,
-  SEI_API_URL: process.env.REACT_APP_SEI_API_URL,
-  SEI_EVM_RPC_URL: process.env.REACT_APP_EVM_RPC_URL,
-  CHAIN_ID: process.env.REACT_APP_CHAIN_ID,
-  EVM_CHAIN_ID: process.env.REACT_APP_EVM_CHAIN_ID,
-} as const;
+// Define required environment variables and their types
+interface RequiredEnvVars {
+  ENVIRONMENT_ID: string;
+  SEI_API_URL: string;
+  SEI_EVM_RPC_URL: string;
+  CHAIN_ID: string;
+  EVM_CHAIN_ID: string;
+}
 
-function determineEnvironment(): Environment {
-  const chainId = requiredEnvVars.CHAIN_ID;
+// Validate and get environment variables with type checking
+function getRequiredEnvVars(): RequiredEnvVars {
+  const vars = {
+    ENVIRONMENT_ID: process.env.REACT_APP_ENVIRONMENT_ID,
+    SEI_API_URL: process.env.REACT_APP_SEI_API_URL,
+    SEI_EVM_RPC_URL: process.env.REACT_APP_EVM_RPC_URL,
+    CHAIN_ID: process.env.REACT_APP_CHAIN_ID,
+    EVM_CHAIN_ID: process.env.REACT_APP_EVM_CHAIN_ID,
+  };
+
+  // Validate all required environment variables are present
+  Object.entries(vars).forEach(([key, value]) => {
+    if (!value) {
+      throw new Error(`Missing required environment variable: REACT_APP_${key}`);
+    }
+  });
+
+  return vars as RequiredEnvVars;
+}
+
+function determineEnvironment(chainId: string): Environment {
   const defaultEnv = environments.mainnet;
   
   if (!chainId) {
@@ -23,14 +42,8 @@ function determineEnvironment(): Environment {
   return environments[envType];
 }
 
-// Validate all required environment variables are present
-Object.entries(requiredEnvVars).forEach(([key, value]) => {
-  if (!value) {
-    throw new Error(`Missing required environment variable: REACT_APP_${key}`);
-  }
-});
-
-const currentEnv = determineEnvironment();
+const requiredEnvVars = getRequiredEnvVars();
+const currentEnv = determineEnvironment(requiredEnvVars.CHAIN_ID);
 
 export const CONFIG = {
   ENVIRONMENT_ID: requiredEnvVars.ENVIRONMENT_ID,
@@ -51,10 +64,10 @@ export const CONFIG = {
   // API Configuration
   API: {
     BASE_URL: currentEnv.api.baseUrl,
-    WALLET_API: currentEnv.api.walletApi, // Added wallet API URL
+    WALLET_API: currentEnv.api.walletApi,
     TIMEOUT: 30000,
     ENDPOINTS: {
-      IBC_TRANSFER: '/ibc/transfer/v1',
+      IBC_TRANSFER: '/ibc/apps/transfer/v1',
       BANK: '/cosmos/bank/v1beta1',
       IBC_CLIENT: '/ibc/core/client/v1',
     }

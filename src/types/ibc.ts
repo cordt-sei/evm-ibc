@@ -1,9 +1,14 @@
 // src/types/ibc.ts
-import type { ExtendedChain } from './chain';
+import type { ExtendedChain, Height } from './chain';
 
 export interface DenomTrace {
   path: string;
   base_denom: string;
+}
+
+export interface ClientState {
+  chain_id: string;
+  latest_height: Height;
 }
 
 export interface IBCToken {
