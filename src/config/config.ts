@@ -1,5 +1,4 @@
 // src/config/config.ts
-import { JsonRpcProvider } from 'ethers';
 import { Environment, environments } from './environments';
 
 // Validate required environment variables
@@ -11,16 +10,8 @@ const requiredEnvVars = {
   EVM_CHAIN_ID: process.env.REACT_APP_EVM_CHAIN_ID,
 } as const;
 
-// Type guard to check if we're in a valid environment
-function isValidEnvironment(env: string): env is keyof typeof environments {
-  return env in environments;
-}
-
-// Determine environment based on chain ID
 function determineEnvironment(): Environment {
   const chainId = requiredEnvVars.CHAIN_ID;
-  
-  // Default to mainnet configuration
   const defaultEnv = environments.mainnet;
   
   if (!chainId) {
@@ -28,7 +19,6 @@ function determineEnvironment(): Environment {
     return defaultEnv;
   }
 
-  // Match chain ID to environment
   const envType = chainId === 'pacific-1' ? 'mainnet' : 'testnet';
   return environments[envType];
 }
@@ -47,7 +37,7 @@ export const CONFIG = {
   
   // Network Configuration
   CHAIN_ID: requiredEnvVars.CHAIN_ID,
-  EVM_CHAIN_ID: parseInt(requiredEnvVars.EVM_CHAIN_ID), // Parse as number
+  EVM_CHAIN_ID: parseInt(requiredEnvVars.EVM_CHAIN_ID),
   RPC_URL: requiredEnvVars.SEI_EVM_RPC_URL,
   API_URL: requiredEnvVars.SEI_API_URL,
   BLOCK_EXPLORER: currentEnv.blockExplorer,
@@ -61,6 +51,7 @@ export const CONFIG = {
   // API Configuration
   API: {
     BASE_URL: currentEnv.api.baseUrl,
+    WALLET_API: currentEnv.api.walletApi, // Added wallet API URL
     TIMEOUT: 30000,
     ENDPOINTS: {
       IBC_TRANSFER: '/ibc/transfer/v1',

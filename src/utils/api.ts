@@ -19,7 +19,7 @@ class APIError extends Error {
 
 export const api = {
   async resolveCosmosAddress(evmAddress: string): Promise<string> {
-    const response = await fetch(`${CONFIG.API.BASE_URL}/wallet/${evmAddress}`, {
+    const response = await fetch(`${CONFIG.API.WALLET_API}/${evmAddress}`, {
       timeout: CONFIG.API.TIMEOUT
     });
     if (!response.ok) throw new APIError('Failed to resolve Cosmos address');

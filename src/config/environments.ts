@@ -6,6 +6,7 @@ export interface Environment {
   blockExplorer: string;
   api: {
     baseUrl: string;
+    walletApi: string; // Added wallet API endpoint
     endpoints?: {
       [key: string]: string;
     };
@@ -28,7 +29,8 @@ export const environments: Record<'mainnet' | 'testnet' | 'devnet', Environment>
     evmChainId: 1329,
     blockExplorer: 'https://seitrace.com',
     api: {
-      baseUrl: 'https://api.sei.basementnodes.ca'
+      baseUrl: 'https://api.sei.basementnodes.ca',
+      walletApi: 'https://wallet-api.sei.basementnodes.ca'
     },
     network: {
       chainName: 'Sei Network',
@@ -51,7 +53,8 @@ export const environments: Record<'mainnet' | 'testnet' | 'devnet', Environment>
     evmChainId: 1328,
     blockExplorer: 'https://seitrace.com/?chain=atlantic-2',
     api: {
-      baseUrl: 'https://rest-testnet.sei-apis.com'
+      baseUrl: 'https://rest-testnet.sei-apis.com',
+      walletApi: 'https://wallet-api-testnet.sei.basementnodes.ca'
     },
     network: {
       chainName: 'Sei Testnet',
@@ -64,7 +67,7 @@ export const environments: Record<'mainnet' | 'testnet' | 'devnet', Environment>
         'https://seitrace.com/?chain=atlantic-2',
         'https://testnet.seistream.app',
         'https://seiscan.app/atlantic-2'
-        ]
+      ]
     }
   },
   devnet: {
@@ -73,7 +76,8 @@ export const environments: Record<'mainnet' | 'testnet' | 'devnet', Environment>
     evmChainId: 713715,
     blockExplorer: 'https://seitrace.com/?chain=arctic-1',
     api: {
-      baseUrl: 'https://rest-arctic-1.sei-apis.com'
+      baseUrl: 'https://rest-arctic-1.sei-apis.com',
+      walletApi: 'https://wallet-api-devnet.sei.basementnodes.ca'
     },
     network: {
       chainName: 'Sei Devtnet',
