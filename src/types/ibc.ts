@@ -1,4 +1,7 @@
 // src/types/ibc.ts
+import type { Chain } from '@chain-registry/types';
+import type { ExtendedChain } from './chain';
+
 export interface Height {
   revision_number: string;
   revision_height: string;
@@ -14,17 +17,15 @@ export interface IBCToken {
   trace: DenomTrace;
   balance: string;
   channel: string;
+  chainId: string;
+  chainInfo: ExtendedChain;
   isReturnable: boolean;
 }
 
-export interface ChannelDetails {
-  counterpartyChannelId: string;
-  connectionId: string;
-  channelId: string;
-  portId: string;
-}
-
-export interface ClientState {
-  chain_id: string;
-  latest_height: Height;
+export interface TokenDisplay {
+  symbol: string;
+  originChain: string;
+  channel: string;
+  displayAmount: string;
+  decimals: number;
 }

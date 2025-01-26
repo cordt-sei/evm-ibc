@@ -1,8 +1,7 @@
 // src/hooks/useIBCTokens.ts
 import { useState, useEffect } from 'react';
 import { IBCToken } from '../types';
-import { validateDenomTrace } from '../utils/denomValidation';
-import { fetchDenomTrace, fetchBalances, resolveCosmosAddress } from '../utils/api';
+import { resolveCosmosAddress, fetchBalances, processIBCTokens } from '../utils/api';
 
 export function useIBCTokens(evmAddress: string) {
   const [tokens, setTokens] = useState<IBCToken[]>([]);
@@ -18,37 +17,9 @@ export function useIBCTokens(evmAddress: string) {
       
       try {
         const cosmosAddress = await resolveCosmosAddress(evmAddress);
-        console.log('Resolved address:', cosmosAddress);
-        
         const balances = await fetchBalances(cosmosAddress);
-        console.log('Fetched balances:', balances);
-        
-        const ibcTokens = await Promise.all(
-          balances
-            .filter(balance => balance.denom.startsWith('ibc/'))
-            .map(async balance => {
-              try {
-                const trace = await fetchDenomTrace(balance.denom);
-                if (!validateDenomTrace(trace)) return null;
-
-                const channel = trace.path.match(/channel-\d+/)?.[0] || '';
-                return {
-                  denom: balance.denom,
-                  trace,
-                  balance: balance.amount,
-                  channel,
-                  isReturnable: true
-                };
-              } catch (err) {
-                console.error(`Error processing ${balance.denom}:`, err);
-                return null;
-              }
-            })
-        );
-
-        const validTokens = ibcTokens.filter((token): token is IBCToken => token !== null);
-        console.log('Valid IBC tokens:', validTokens);
-        setTokens(validTokens);
+        const ibcTokens = await processIBCTokens(balances);
+        setTokens(ibcTokens);
       } catch (err) {
         console.error('Failed to fetch IBC tokens:', err);
         setError('Failed to fetch IBC tokens');

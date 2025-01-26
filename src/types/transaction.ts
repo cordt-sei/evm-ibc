@@ -11,15 +11,15 @@ export interface TransferParams {
   memo: string;
 }
 
+export interface GasConfig {
+  gasLimit: bigint;
+  maxFeePerGas?: bigint;
+  maxPriorityFeePerGas?: bigint;
+}
+
 export interface TransactionStatus {
   status: 'idle' | 'pending' | 'success' | 'error';
   hash?: string;
   error?: Error;
   receipt?: any;
-}
-
-export interface GasConfig {
-  gasLimit: bigint;
-  maxFeePerGas?: bigint;
-  maxPriorityFeePerGas?: bigint;
 }

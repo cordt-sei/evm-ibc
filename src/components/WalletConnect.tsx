@@ -8,6 +8,7 @@ const WalletConnect: React.FC = () => {
     setShowAuthFlow,
     primaryWallet,
     handleLogOut,
+    isAuthenticated,
     user
   } = useDynamicContext();
 
@@ -33,7 +34,7 @@ const WalletConnect: React.FC = () => {
 
   return (
     <div className="flex items-center justify-between p-4 border rounded-lg mb-4 bg-white">
-      {!primaryWallet ? (
+      {!isAuthenticated ? (
         <button
           onClick={handleConnect}
           disabled={connecting}
@@ -48,9 +49,9 @@ const WalletConnect: React.FC = () => {
           <div className="flex items-center gap-2">
             <div className="text-sm font-medium">Connected:</div>
             <div className="px-3 py-1 bg-gray-100 rounded-full text-sm font-mono">
-              {formatAddress(primaryWallet.address)}
+              {formatAddress(primaryWallet?.address || '')}
             </div>
-            {primaryWallet.connector?.name && (
+            {primaryWallet?.connector?.name && (
               <div className="text-sm text-gray-500">
                 {primaryWallet.connector.name}
               </div>

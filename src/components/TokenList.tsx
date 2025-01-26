@@ -1,7 +1,7 @@
 // src/components/TokenList.tsx
 import React from 'react';
 import { IBCToken } from '../types';
-import { getTokenDisplayInfo } from '../utils/tokenDisplay';
+import { getTokenDisplayInfo, getTokenExplorerUrl } from '../utils/tokenDisplay';
 
 interface TokenListProps {
   tokens: IBCToken[];
@@ -33,7 +33,9 @@ const TokenList: React.FC<TokenListProps> = ({
     ) : (
       <div className="space-y-3">
         {tokens.map((token, index) => {
-          const { symbol, originChain } = getTokenDisplayInfo(token);
+          const { symbol, originChain, displayAmount, channel } = getTokenDisplayInfo(token);
+          const explorerUrl = getTokenExplorerUrl(token);
+          
           return (
             <div
               key={index}
@@ -42,15 +44,28 @@ const TokenList: React.FC<TokenListProps> = ({
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-lg font-medium text-gray-900 group-hover:text-blue-600">{symbol}</span>
+                  <span className="text-lg font-medium text-gray-900 group-hover:text-blue-600">
+                    {symbol}
+                  </span>
                   <div className="space-y-1 mt-2">
-                    <p className="text-sm text-gray-600">Channel: {token.channel}</p>
+                    <p className="text-sm text-gray-600">Channel: {channel}</p>
                     <p className="text-sm text-gray-600">Origin: {originChain}</p>
+                    {explorerUrl && (
+                      <a 
+                        href={explorerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="text-sm text-blue-500 hover:text-blue-600"
+                      >
+                        View in Explorer
+                      </a>
+                    )}
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="inline-block bg-gray-100 px-3 py-1 rounded-lg text-gray-900 font-mono text-sm">
-                    {parseInt(token.balance).toLocaleString()}
+                    {displayAmount}
                   </span>
                 </div>
               </div>
