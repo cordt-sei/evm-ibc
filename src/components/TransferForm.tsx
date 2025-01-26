@@ -2,22 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { JsonRpcProvider } from 'ethers';
 import { IBCToken } from '../types';
-import { validateAddress } from '../utils/chain';
-import { constructTransferParams, estimateGasWithBuffer } from '../utils/transaction';
+import { validation } from '../utils/validation';
+import { transaction } from '../utils/transaction';
 import { getTokenDisplayInfo } from '../utils/tokenDisplay';
-import { executeTransfer } from '../contracts/ibcPrecompile';
 import { useChainInfo } from '../hooks/useChainInfo';
 import { useTransactionStatus } from '../hooks/useTransactionStatus';
 import WalletSuggestion from './WalletSuggestion';
+import { CONFIG } from '../config/config';
 
 const convertToBaseUnits = (amount: string, decimals: number): bigint => {
-  // Remove any trailing decimal places beyond what's supported
   const parts = amount.split('.');
   const whole = parts[0];
   const decimal = parts[1]?.slice(0, decimals) || '';
   const paddedDecimal = decimal.padEnd(decimals, '0');
-  
-  // Combine whole and decimal parts, removing any leading zeros
   const combinedStr = `${whole}${paddedDecimal}`.replace(/^0+/, '');
   return BigInt(combinedStr || '0');
 };
@@ -36,9 +33,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
   const { chainInfo, fetchChainInfo } = useChainInfo();
   const { status, handleError, handleSuccess, setPending } = useTransactionStatus();
   
-  const provider = new JsonRpcProvider(
-    process.env.REACT_APP_SEI_RPC_URL || 'https://evm-rpc.sei-apis.com'
-  );
+  const provider = new JsonRpcProvider(CONFIG.RPC_URL);
 
   useEffect(() => {
     if (selectedToken) {
@@ -50,6 +45,12 @@ const TransferForm: React.FC<TransferFormProps> = ({
     e.preventDefault();
 
     try {
+      // Verify network connection
+      const network = await provider.getNetwork();
+      if (network.chainId !== BigInt(CONFIG.EVM_CHAIN_ID)) {
+        throw new Error(`Wrong network. Expected chain ID ${CONFIG.EVM_CHAIN_ID}`);
+      }
+
       const currentBlock = await provider.getBlockNumber();
       const height = {
         revision_number: '1',
@@ -59,16 +60,16 @@ const TransferForm: React.FC<TransferFormProps> = ({
       const { decimals } = getTokenDisplayInfo(selectedToken);
       const baseUnits = convertToBaseUnits(amount, decimals);
 
-      const transferParams = constructTransferParams(
+      const transferParams = transaction.constructTransferParams(
         selectedToken,
         receiver,
         baseUnits,
         height
       );
 
-      const gasConfig = await estimateGasWithBuffer(provider, transferParams);
+      const gasConfig = await transaction.estimateGas(provider, transferParams);
       
-      const tx = await executeTransfer(transferParams, provider, gasConfig);
+      const tx = await transaction.executeTransfer(transferParams, provider, gasConfig);
       setPending(tx.hash);
       
       const receipt = await tx.wait();
@@ -80,16 +81,21 @@ const TransferForm: React.FC<TransferFormProps> = ({
   };
 
   if (!selectedToken.chainInfo) {
-    return <div>Loading chain configuration...</div>;
+    return (
+      <div className="p-4 text-center text-gray-600">
+        Loading chain configuration...
+      </div>
+    );
   }
 
   const { symbol, decimals } = getTokenDisplayInfo(selectedToken);
-  const isValidAddress = validateAddress(receiver, selectedToken.chainInfo);
+  const isValidAddress = validation.address(receiver, selectedToken.chainInfo);
+  const isValidAmount = validation.amount(amount, decimals);
+  const isTransactionPending = status.status === 'pending';
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Only allow numbers and a single decimal point
-    if (/^\d*\.?\d*$/.test(value)) {
+    if (validation.amount(value, decimals)) {
       setAmount(value);
     }
   };
@@ -108,7 +114,13 @@ const TransferForm: React.FC<TransferFormProps> = ({
             onChange={(e) => setReceiver(e.target.value)}
             placeholder={`${selectedToken.chainInfo.bech32_prefix}... address`}
             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+            disabled={isTransactionPending}
           />
+          {receiver && !isValidAddress && (
+            <p className="mt-1 text-sm text-red-600">
+              Invalid address for this chain
+            </p>
+          )}
         </div>
 
         <div>
@@ -121,24 +133,44 @@ const TransferForm: React.FC<TransferFormProps> = ({
             onChange={handleAmountChange}
             placeholder={`Enter amount (up to ${decimals} decimals)`}
             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+            disabled={isTransactionPending}
           />
+          {amount && !isValidAmount && (
+            <p className="mt-1 text-sm text-red-600">
+              Invalid amount format
+            </p>
+          )}
         </div>
 
         <button
           type="submit"
-          disabled={!isValidAddress || status.status === 'pending' || !amount}
+          disabled={!isValidAddress || !isValidAmount || isTransactionPending}
           className={`w-full p-2 rounded font-medium ${
-            !isValidAddress || status.status === 'pending' || !amount
+            !isValidAddress || !isValidAmount || isTransactionPending
               ? 'bg-gray-300 cursor-not-allowed'
               : 'bg-blue-600 hover:bg-blue-700 text-white'
           }`}
         >
-          {status.status === 'pending' ? 'Processing...' : 'Return Token'}
+          {isTransactionPending ? 'Processing...' : 'Return Token'}
         </button>
 
         {status.error && (
           <div className="p-3 text-sm text-red-600 bg-red-50 rounded">
             {status.error.message}
+          </div>
+        )}
+
+        {status.status === 'success' && (
+          <div className="p-3 text-sm text-green-600 bg-green-50 rounded">
+            Transaction successful! View on{' '}
+            <a
+              href={`${CONFIG.BLOCK_EXPLORER}/tx/${status.hash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:no-underline"
+            >
+              explorer
+            </a>
           </div>
         )}
       </form>

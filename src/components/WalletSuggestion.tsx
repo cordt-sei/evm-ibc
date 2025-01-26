@@ -1,7 +1,7 @@
 // src/components/WalletSuggestion.tsx
 import React, { useState } from 'react';
-import { Asset, Chain } from '@chain-registry/types';
 import { ChainInfo, KeplrWindow, KeplrChainInfo } from '../types';
+import { CONFIG } from '../config/config';
 
 interface WalletSuggestionProps {
   chain: ChainInfo;
@@ -13,13 +13,13 @@ const WalletSuggestion: React.FC<WalletSuggestionProps> = ({ chain, onWalletSele
   const [connecting, setConnecting] = useState(false);
   const keplrWindow = window as KeplrWindow;
 
-  const getKeplrFromChain = (chainData: Chain): KeplrChainInfo | null => {
-    const rpcEndpoint = chainData.apis?.rpc?.[0]?.address;
-    const restEndpoint = chainData.apis?.rest?.[0]?.address;
-    const feeDenom = chainData.fees?.fee_tokens?.[0]?.denom;
+  const getKeplrChainConfig = (chainInfo: ChainInfo): KeplrChainInfo => {
+    const rpcEndpoint = chainInfo.chainData.apis?.rpc?.[0]?.address;
+    const restEndpoint = chainInfo.chainData.apis?.rest?.[0]?.address;
+    const feeDenom = chainInfo.chainData.fees?.fee_tokens?.[0]?.denom;
 
     if (!rpcEndpoint || !restEndpoint || !feeDenom) {
-      return null;
+      throw new Error('Missing required chain configuration');
     }
 
     return {
@@ -39,12 +39,12 @@ const WalletSuggestion: React.FC<WalletSuggestionProps> = ({ chain, onWalletSele
       currencies: [{
         coinDenom: feeDenom.toUpperCase(),
         coinMinimalDenom: feeDenom,
-        coinDecimals: 6
+        coinDecimals: CONFIG.NETWORK.NATIVE_CURRENCY.decimals
       }],
       feeCurrencies: [{
         coinDenom: feeDenom.toUpperCase(),
         coinMinimalDenom: feeDenom,
-        coinDecimals: 6,
+        coinDecimals: CONFIG.NETWORK.NATIVE_CURRENCY.decimals,
         gasPriceStep: {
           low: 0.01,
           average: 0.025,
@@ -54,7 +54,7 @@ const WalletSuggestion: React.FC<WalletSuggestionProps> = ({ chain, onWalletSele
       stakeCurrency: {
         coinDenom: feeDenom.toUpperCase(),
         coinMinimalDenom: feeDenom,
-        coinDecimals: 6
+        coinDecimals: CONFIG.NETWORK.NATIVE_CURRENCY.decimals
       }
     };
   };
@@ -65,13 +65,12 @@ const WalletSuggestion: React.FC<WalletSuggestionProps> = ({ chain, onWalletSele
     
     try {
       if (!keplrWindow.keplr) {
-        throw new Error('Keplr extension not found. Please install it first.');
+        throw new Error(
+          'Keplr extension not found. Please install it from the Chrome Web Store.'
+        );
       }
 
-      const keplrConfig = getKeplrFromChain(chain.chainData);
-      if (!keplrConfig) {
-        throw new Error('Unable to create Keplr configuration from chain data');
-      }
+      const keplrConfig = getKeplrChainConfig(chain);
 
       await keplrWindow.keplr.experimentalSuggestChain(keplrConfig);
       await keplrWindow.keplr.enable(chain.chainId);
@@ -81,6 +80,8 @@ const WalletSuggestion: React.FC<WalletSuggestionProps> = ({ chain, onWalletSele
       
       if (accounts[0]) {
         onWalletSelect(accounts[0].address);
+      } else {
+        throw new Error('No accounts found in Keplr');
       }
     } catch (err) {
       console.error('Keplr connection error:', err);

@@ -1,51 +1,68 @@
 // src/hooks/useChainInfo.ts
-import { useState, useEffect } from 'react';
-import { API_CONFIG } from '../config';
-import type { ChainInfo } from '../types';
+import { useState, useEffect, useCallback } from 'react';
+import { ChainInfo } from '../types';
+import { api } from '../utils/api';
+import { CONFIG } from '../config/config';
+
+interface ChainInfoState {
+  chainInfo: Map<string, ChainInfo>;
+  loading: boolean;
+  error: string | null;
+}
 
 export function useChainInfo() {
-  const [chainInfo, setChainInfo] = useState<Map<string, ChainInfo>>(new Map());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<ChainInfoState>({
+    chainInfo: new Map(),
+    loading: false,
+    error: null
+  });
 
-  const fetchChainInfo = async (channelId: string, portId: string) => {
-    if (chainInfo.has(channelId)) return;
+  const fetchChainInfo = useCallback(async (channelId: string, portId: string) => {
+    if (state.chainInfo.has(channelId)) return;
 
-    setLoading(true);
-    setError(null);
+    setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}/ibc/core/channel/v1/channels/${channelId}/ports/${portId}/client_state`
+        `${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.IBC_CLIENT}/channels/${channelId}/ports/${portId}/client_state`,
+        { timeout: CONFIG.API.TIMEOUT }
       );
       
       if (!response.ok) {
-        throw new Error('Failed to fetch chain info');
+        throw new Error(`Failed to fetch chain info: ${response.statusText}`);
       }
       
       const data = await response.json();
       const chainData = data.identified_client_state?.client_state;
       
       if (!chainData) {
-        throw new Error('No chain data found');
+        throw new Error('No chain data found in response');
       }
       
-      // Update the chainInfo map with the new data
-      setChainInfo(prev => new Map(prev).set(channelId, {
-        chainId: chainData.chain_id,
-        chainName: chainData.chain_name || chainData.chain_id,
-        bech32Prefix: chainData.bech32_config?.main_prefix || '',
-        slip44: chainData.slip44 || 118,
-        chainData: chainData
+      setState(prev => ({
+        ...prev,
+        chainInfo: new Map(prev.chainInfo).set(channelId, {
+          chainId: chainData.chain_id,
+          chainName: chainData.chain_name || chainData.chain_id,
+          bech32Prefix: chainData.bech32_config?.main_prefix || '',
+          slip44: chainData.slip44 || CONFIG.NETWORK.NATIVE_CURRENCY.decimals,
+          chainData: chainData
+        }),
+        loading: false
       }));
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch chain info');
       console.error('Chain info fetch error:', err);
-    } finally {
-      setLoading(false);
+      setState(prev => ({
+        ...prev,
+        error: err instanceof Error ? err.message : 'Failed to fetch chain info',
+        loading: false
+      }));
     }
-  };
+  }, [state.chainInfo]);
 
-  return { chainInfo, loading, error, fetchChainInfo };
+  return {
+    ...state,
+    fetchChainInfo
+  };
 }

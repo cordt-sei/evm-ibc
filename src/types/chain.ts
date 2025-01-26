@@ -13,6 +13,7 @@ export interface ChainInfo {
   slip44: number;
   chainData: RegistryChain;
   staking?: string;
+  evmChainId: number; // Added to match new config
 }
 
 export interface ChainResponse {
@@ -36,6 +37,7 @@ export interface ExtendedChain extends Omit<RegistryChain, 'status' | 'network_t
   network_type: 'mainnet' | 'testnet' | 'devnet';
   bech32_prefix: string;
   slip44?: number;
+  evmChainId?: number;
   assets?: Asset[];
   staking?: {
     staking_tokens: Array<{
@@ -46,4 +48,9 @@ export interface ExtendedChain extends Omit<RegistryChain, 'status' | 'network_t
     url: string;
     tx_page?: string;
   }>;
+  nativeCurrency?: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
 }

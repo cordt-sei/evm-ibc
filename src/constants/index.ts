@@ -6,14 +6,6 @@ export const IBC_CONSTANTS = {
   PATH_REGEX: /^(transfer\/channel-\d+)$/
  };
  
- export const CHAIN_CONSTANTS = {
-  SEI: {
-    CHAIN_ID: 'atlantic-2',
-    DENOM: 'usei',
-    DECIMALS: 6
-  }
- };
- 
  export const ERROR_MESSAGES = {
   INVALID_ADDRESS: 'Invalid destination address',
   MULTI_HOP: 'Token has been through multiple IBC transfers',

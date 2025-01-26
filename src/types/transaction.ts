@@ -22,4 +22,5 @@ export interface TransactionStatus {
   hash?: string;
   error?: Error;
   receipt?: any;
+  blockExplorerUrl?: string;
 }

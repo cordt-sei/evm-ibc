@@ -2,6 +2,7 @@
 import type { Asset } from '@chain-registry/types';
 import type { IBCToken, TokenDisplay } from '../types';
 import type { ExtendedChain } from '../types/chain';
+import { CONFIG } from '../config/config';
 
 export function formatTokenAmount(amount: string, decimals: number = 6): string {
   const value = parseInt(amount) / Math.pow(10, decimals);
@@ -11,7 +12,7 @@ export function formatTokenAmount(amount: string, decimals: number = 6): string 
 }
 
 function findAssetDecimals(asset: Asset | undefined): number {
-  if (!asset?.denom_units?.length) return 6;
+  if (!asset?.denom_units?.length) return CONFIG.NETWORK.NATIVE_CURRENCY.decimals;
   
   const exponent = asset.denom_units.reduce((max, unit) => 
     Math.max(max, unit.exponent || 0), 0);
@@ -44,7 +45,18 @@ export function getTokenExplorerUrl(token: IBCToken): string | null {
   const chainData = token.chainInfo as ExtendedChain;
   const explorer = chainData.explorers?.[0];
   
-  if (!explorer?.url) return null;
+  if (!explorer?.url) {
+    // Fallback to chain's default explorer
+    const defaultExplorer = CONFIG.NETWORK.BLOCK_EXPLORER_URLS[0];
+    if (defaultExplorer) {
+      return `${defaultExplorer}/tokens/${token.denom}`;
+    }
+    return null;
+  }
   
   return `${explorer.url}/tokens/${token.denom}`;
+}
+
+export function buildTokenIdentifier(token: IBCToken): string {
+  return `${token.chainInfo.chainId}/${token.channel}/${token.trace.base_denom}`;
 }

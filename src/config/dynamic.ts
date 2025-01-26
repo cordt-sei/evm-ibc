@@ -1,19 +1,29 @@
 // src/config/dynamic.ts
-import type { DynamicConfig } from '../types';
+import { DynamicConfig } from '../types';
+import { CONFIG } from './config';
+import { getEnvironmentConfig } from './environments';
 
-if (!process.env.REACT_APP_ENVIRONMENT_ID) {
-  throw new Error('REACT_APP_ENVIRONMENT_ID must be set in .env file');
-}
+const envConfig = getEnvironmentConfig(CONFIG.CHAIN_ID);
 
 export const dynamicSettings: DynamicConfig = {
-  environmentId: process.env.REACT_APP_ENVIRONMENT_ID,
+  environmentId: CONFIG.ENVIRONMENT_ID,
   appName: 'IBC Return Transfer',
   appLogoUrl: 'https://sei.io/favicon.ico',
   walletConnectors: ['evmWallet'],
   evmNetworks: [{
-    chainId: 38,
-    name: 'Sei EVM',
-    rpcUrl: process.env.REACT_APP_SEI_RPC_URL || 'https://evm-rpc.sei-apis.com'
+    chainId: CONFIG.EVM_CHAIN_ID,
+    name: envConfig.network.chainName,
+    rpcUrl: CONFIG.RPC_URL
   }],
-  storageKey: 'sei-ibc-transfer-auth'
+  storageKey: 'sei-ibc-transfer-auth',
+  initializeOnMount: true,
+  displaySiweStatement: false,
+  walletConnectorOptions: {
+    injected: {
+      displayName: 'Sei Network Wallet',
+      showAppLogoOnConnectingScreen: true,
+      showAccountIconOnConnectingScreen: true,
+      showBackButton: true
+    }
+  }
 };
