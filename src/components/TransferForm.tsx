@@ -1,15 +1,15 @@
 // src/components/TransferForm.tsx
 import React, { useState, useEffect } from 'react';
-import type { IBCToken, ChainInfo, ExtendedChain } from '../types';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { BrowserProvider, JsonRpcSigner } from 'ethers';
+import type { ChainInfo, IBCToken, ExtendedChain } from '../types';
 import { validation } from '../utils/validation';
 import { getTokenDisplayInfo } from '../utils/tokenDisplay';
 import { useChainInfo } from '../hooks/useChainInfo';
 import { useTransactionStatus } from '../hooks/useTransactionStatus';
 import { CONFIG } from '../config/config';
-import { ethers } from 'ethers';
 
 // Lazy load heavy dependencies
-const loadEthers = () => import(/* webpackChunkName: "ethers" */ 'ethers');
 const loadTransaction = () => import(/* webpackChunkName: "transaction" */ '../utils/transaction');
 const loadWalletSuggestion = () => import(/* webpackChunkName: "wallet-suggestion" */ './WalletSuggestion');
 
@@ -48,7 +48,8 @@ const TransferForm: React.FC<TransferFormProps> = ({
   const { chainInfoMap, fetchChainInfo } = useChainInfo();
   const { status, handleError, handleSuccess, setPending } = useTransactionStatus();
   const [WalletSuggestion, setWalletSuggestion] = useState<React.ComponentType<any> | null>(null);
-  
+  const { primaryWallet } = useDynamicContext();
+
   useEffect(() => {
     // Dynamically load WalletSuggestion component
     loadWalletSuggestion().then(module => {
@@ -65,13 +66,15 @@ const TransferForm: React.FC<TransferFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      const [{ JsonRpcProvider }, { transaction }] = await Promise.all([
-        loadEthers(),
-        loadTransaction()
-      ]);
+    if (!primaryWallet?.connector?.provider) {
+      handleError(new Error('Please connect your wallet first'));
+      return;
+    }
 
-      const provider = new JsonRpcProvider(CONFIG.RPC_URL);
+    try {
+      const { transaction } = await loadTransaction();
+      const provider = new BrowserProvider(primaryWallet.connector.provider);
+      const signer = await provider.getSigner();
 
       // Verify network connection
       const network = await provider.getNetwork();
@@ -97,7 +100,12 @@ const TransferForm: React.FC<TransferFormProps> = ({
 
       const gasConfig = await transaction.estimateGas(provider, transferParams);
       
-      const tx = await transaction.executeTransfer(transferParams, provider, gasConfig);
+      const tx = await transaction.executeTransfer(
+        transferParams, 
+        provider, 
+        { ...gasConfig, signer }
+      );
+      
       setPending(tx.hash);
       
       const receipt = await tx.wait();
@@ -118,9 +126,10 @@ const TransferForm: React.FC<TransferFormProps> = ({
 
   const { symbol, decimals } = getTokenDisplayInfo(selectedToken);
   const combinedChainInfo = combineChainInfo(selectedToken.chainInfo);
-  const isValidAddress = validation.address(receiver, combinedChainInfo);
+  const isValidAddress = validation.address(receiver, combinedChainInfo);  
   const isValidAmount = validation.amount(amount, decimals);
   const isTransactionPending = status.status === 'pending';
+  const isWalletConnected = !!primaryWallet?.connector?.provider;
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -131,6 +140,12 @@ const TransferForm: React.FC<TransferFormProps> = ({
 
   return (
     <div className="space-y-4">
+      {!isWalletConnected && (
+        <div className="p-3 text-sm text-yellow-600 bg-yellow-50 rounded">
+          Please connect your wallet to perform transactions
+        </div>
+      )}
+      
       {WalletSuggestion && (
         <WalletSuggestion 
           chain={selectedToken.chainInfo} 
@@ -178,14 +193,18 @@ const TransferForm: React.FC<TransferFormProps> = ({
 
         <button
           type="submit"
-          disabled={!isValidAddress || !isValidAmount || isTransactionPending}
+          disabled={!isWalletConnected || !isValidAddress || !isValidAmount || isTransactionPending}
           className={`w-full p-2 rounded font-medium ${
-            !isValidAddress || !isValidAmount || isTransactionPending
+            !isWalletConnected || !isValidAddress || !isValidAmount || isTransactionPending
               ? 'bg-gray-300 cursor-not-allowed'
               : 'bg-blue-600 hover:bg-blue-700 text-white'
           }`}
         >
-          {isTransactionPending ? 'Processing...' : 'Return Token'}
+          {!isWalletConnected 
+            ? 'Connect Wallet First'
+            : isTransactionPending 
+              ? 'Processing...' 
+              : 'Return Token'}
         </button>
 
         {status.error && (

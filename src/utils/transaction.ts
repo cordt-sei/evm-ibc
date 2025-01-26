@@ -1,5 +1,5 @@
 // src/utils/transaction.ts
-import { JsonRpcProvider, Contract } from 'ethers';
+import { BrowserProvider, Contract, JsonRpcSigner } from 'ethers';
 import { IBC_PRECOMPILE } from '../contracts/ibcPrecompile';
 import { CONFIG } from '../config/config';
 import type { 
@@ -46,7 +46,7 @@ export const transaction = {
   },
 
   estimateGas: async (
-    provider: JsonRpcProvider,
+    provider: BrowserProvider,
     params: TransferParams
   ): Promise<GasConfig> => {
     try {
@@ -79,10 +79,10 @@ export const transaction = {
 
   executeTransfer: async (
     params: TransferParams,
-    provider: JsonRpcProvider,
-    gasConfig: Partial<GasConfig> = {}
+    provider: BrowserProvider,
+    gasConfig: Partial<GasConfig> & { signer?: JsonRpcSigner } = {}
   ) => {
-    const signer = provider.getSigner();
+    const signer = gasConfig.signer || await provider.getSigner();
     if (!signer) {
       throw new Error('Provider must be connected to a signer');
     }
@@ -119,7 +119,7 @@ export const transaction = {
   },
 
   monitorTransaction: async (
-    provider: JsonRpcProvider,
+    provider: BrowserProvider,
     hash: string,
     maxAttempts: number = 10
   ): Promise<TransactionStatus> => {
