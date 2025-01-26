@@ -44,7 +44,8 @@ export const dynamicSettings: DynamicConfig = {
       showAccountIconOnConnectingScreen: true,
       showBackButton: true
     }
-  }
+  },
+  children: undefined
 };
 
 // Error handler for Dynamic client initialization

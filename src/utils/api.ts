@@ -19,7 +19,7 @@ class APIError extends Error {
 }
 
 // Helper function to implement timeout for fetch
-export async function fetchWithTimeout(
+async function fetchWithTimeout(
   url: string,
   options: RequestInit = {},
   timeout: number = CONFIG.API.TIMEOUT
@@ -84,19 +84,25 @@ export const api = {
         throw new APIError('Chain ID not found in client state');
       }
 
-      const chainInfo = chains.find(c => c.chain_id === chainId);
-      if (!chainInfo) {
-        console.warn(`Chain not found in registry: ${chainId}`);
+      const registryChain = chains.find(c => c.chain_id === chainId);
+      if (!registryChain || !registryChain.bech32_prefix) {
+        console.warn(`Chain not found in registry or missing bech32_prefix: ${chainId}`);
         return null;
       }
 
+      // Ensure required chain_type property exists
+      const chainData = {
+        ...registryChain,
+        chain_type: 'cosmos' as const
+      };
+
       return {
-        chainId: chainInfo.chain_id,
-        chainName: chainInfo.pretty_name || chainInfo.chain_name,
-        bech32Prefix: chainInfo.bech32_prefix,
-        slip44: chainInfo.slip44 || 118,
-        chainData: chainInfo,
-        staking: chainInfo.staking?.staking_tokens?.[0]?.denom,
+        chainId: chainData.chain_id,
+        chainName: chainData.pretty_name || chainData.chain_name,
+        bech32Prefix: chainData.bech32_prefix,
+        slip44: chainData.slip44 || 118,
+        chainData,
+        staking: chainData.staking?.staking_tokens?.[0]?.denom,
         evmChainId: CONFIG.EVM_CHAIN_ID
       };
     } catch (error) {
@@ -138,7 +144,7 @@ export const api = {
     return results.filter((token): token is IBCToken => token !== null);
   },
 
-  // Helper method to retry failed requests
+  // failed requests retry
   async retryRequest<T>(
     request: () => Promise<T>,
     retries: number = 3,
@@ -156,7 +162,7 @@ export const api = {
   }
 };
 
-// Utility type for API response handling
+// API response handling
 export type ApiResponse<T> = {
   success: boolean;
   data?: T;

@@ -1,7 +1,6 @@
 // src/hooks/useChainInfo.ts
-import { useState, useEffect, useCallback } from 'react';
-import { ChainInfo, ChainResponse } from '../types';
-import { CONFIG } from '../config/config';
+import { useState, useCallback } from 'react';
+import { ChainInfo } from '../types';
 import { api } from '../utils/api';
 
 interface ChainInfoState {
@@ -17,30 +16,21 @@ export function useChainInfo() {
     error: null
   });
 
-  const fetchChainInfo = useCallback(async (channelId: string, portId: string) => {
+  const fetchChainInfo = useCallback(async (channelId: string, portId: string = 'transfer') => {
     if (state.chainInfo.has(channelId)) return;
 
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      // Use the centralized API client to fetch the client state
-      const clientState: ChainResponse = await api.fetchClientState(channelId, portId);
-      const chainData = clientState?.identified_client_state?.client_state;
+      const chainInfo = await api.fetchChainInfo(channelId);
       
-      if (!chainData) {
-        throw new Error('No chain data found in response');
+      if (!chainInfo) {
+        throw new Error('Failed to fetch chain info');
       }
-      
+
       setState(prev => ({
         ...prev,
-        chainInfo: new Map(prev.chainInfo).set(channelId, {
-          chainId: chainData.chain_id,
-          chainName: chainData.chain_name || chainData.chain_id,
-          bech32Prefix: chainData.bech32_config?.main_prefix || '',
-          slip44: chainData.slip44 || CONFIG.NETWORK.NATIVE_CURRENCY.decimals,
-          chainData: chainData,
-          evmChainId: CONFIG.EVM_CHAIN_ID
-        }),
+        chainInfo: new Map(prev.chainInfo).set(channelId, chainInfo),
         loading: false
       }));
       

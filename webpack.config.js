@@ -6,6 +6,7 @@ import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import { fileURLToPath } from 'url';
 import TerserPlugin from 'terser-webpack-plugin';
 import CompressionPlugin from 'compression-webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +35,10 @@ export default {
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader', 'postcss-loader']
+      },
+      {
+        test: /\.(png|svg|jpg|jpeg|gif|ico)$/i,
+        type: 'asset/resource'
       }
     ]
   },
@@ -53,7 +58,37 @@ export default {
     new HtmlWebpackPlugin({
       template: './src/public/index.html',
       inject: true,
-      minify: isProd
+      favicon: './src/assets/favicon.ico',
+      minify: isProd,
+      meta: {
+        'theme-color': '#ffffff',
+        'description': 'IBC Return Transfer Interface',
+        'viewport': 'width=device-width, initial-scale=1, shrink-to-fit=no'
+      }
+    }),
+    new CopyPlugin({
+      patterns: [
+        { 
+          from: 'src/assets',
+          to: 'assets',
+          globOptions: {
+            ignore: ['**/*.ico'] // Favicon is handled by HtmlWebpackPlugin
+          }
+        },
+        {
+          from: 'src/assets/site.webmanifest',
+          to: 'site.webmanifest',
+          transform(content) {
+            // Update paths in manifest to match output structure
+            const manifest = JSON.parse(content.toString());
+            manifest.icons = manifest.icons.map(icon => ({
+              ...icon,
+              src: `assets/${path.basename(icon.src)}`
+            }));
+            return JSON.stringify(manifest, null, 2);
+          }
+        }
+      ]
     }),
     new Dotenv(),
     isProd && new CompressionPlugin({
