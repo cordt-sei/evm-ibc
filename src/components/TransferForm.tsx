@@ -6,6 +6,7 @@ import { getTokenDisplayInfo } from '../utils/tokenDisplay';
 import { useChainInfo } from '../hooks/useChainInfo';
 import { useTransactionStatus } from '../hooks/useTransactionStatus';
 import { CONFIG } from '../config/config';
+import { ethers } from 'ethers';
 
 // Lazy load heavy dependencies
 const loadEthers = () => import(/* webpackChunkName: "ethers" */ 'ethers');

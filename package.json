@@ -17,10 +17,10 @@
     "@types/react-dom": "^18.2.18",
     "bech32": "^2.0.0",
     "chain-registry": "^1.69.103",
-    "ethers": "^6.10.0",
+    "ethers": "6.13.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "^5.3.3",
+    "typescript": "^5.7.3",
     "viem": "^2.22.13",
     "walletconnect": "^1.7.8"
   },
