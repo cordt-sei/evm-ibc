@@ -90,21 +90,18 @@ export const api = {
         return null;
       }
 
-      // Ensure required chain_type property exists
-      const chainData = {
-        ...registryChain,
-        chain_type: 'cosmos' as const
-      };
-
-      return {
-        chainId: chainData.chain_id,
-        chainName: chainData.pretty_name || chainData.chain_name,
-        bech32Prefix: chainData.bech32_prefix,
-        slip44: chainData.slip44 || 118,
-        chainData,
-        staking: chainData.staking?.staking_tokens?.[0]?.denom,
+      // Create a properly typed chain info object
+      const chainInfo: ChainInfo = {
+        chainId: chainId,
+        chainName: registryChain.pretty_name || registryChain.chain_name,
+        bech32Prefix: registryChain.bech32_prefix,
+        slip44: registryChain.slip44 || 118,
+        chainData: registryChain,
+        staking: registryChain.staking?.staking_tokens?.[0]?.denom,
         evmChainId: CONFIG.EVM_CHAIN_ID
       };
+
+      return chainInfo;
     } catch (error) {
       console.error('Error fetching chain info:', error);
       return null;
@@ -131,7 +128,7 @@ export const api = {
             balance: balance.amount,
             channel,
             chainId: chainInfo.chainId,
-            chainInfo: chainInfo as unknown as ExtendedChain,
+            chainInfo: chainInfo.chainData as ExtendedChain,
             isReturnable: true
           };
         } catch (err) {

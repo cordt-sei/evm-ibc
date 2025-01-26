@@ -1,10 +1,10 @@
 // src/components/WalletSuggestion.tsx
 import React, { useState } from 'react';
-import { ChainInfo, KeplrWindow, KeplrChainInfo } from '../types';
+import { ChainInfo, KeplrWindow, KeplrChainInfo, ExtendedChain } from '../types';
 import { CONFIG } from '../config/config';
 
 interface WalletSuggestionProps {
-  chain: ChainInfo;
+  chain: ExtendedChain;  // Changed from ChainInfo to ExtendedChain
   onWalletSelect: (address: string) => void;
 }
 
@@ -13,28 +13,39 @@ const WalletSuggestion: React.FC<WalletSuggestionProps> = ({ chain, onWalletSele
   const [connecting, setConnecting] = useState(false);
   const keplrWindow = window as KeplrWindow;
 
-  const getKeplrChainConfig = (chainInfo: ChainInfo): KeplrChainInfo => {
-    const rpcEndpoint = chainInfo.chainData.apis?.rpc?.[0]?.address;
-    const restEndpoint = chainInfo.chainData.apis?.rest?.[0]?.address;
-    const feeDenom = chainInfo.chainData.fees?.fee_tokens?.[0]?.denom;
+  const getKeplrChainConfig = (chainInfo: ExtendedChain): KeplrChainInfo => {
+    const rpcEndpoint = chainInfo.apis?.rpc?.[0]?.address;
+    const restEndpoint = chainInfo.apis?.rest?.[0]?.address;
+    const feeDenom = chainInfo.fees?.fee_tokens?.[0]?.denom;
 
     if (!rpcEndpoint || !restEndpoint || !feeDenom) {
       throw new Error('Missing required chain configuration');
     }
 
+    // Convert ExtendedChain to ChainInfo format for Keplr
+    const chainData: ChainInfo = {
+      chainId: chain.chain_id,
+      chainName: chain.pretty_name || chain.chain_name,
+      bech32Prefix: chain.bech32_prefix,
+      slip44: chain.slip44 || 118,
+      chainData: chain,
+      staking: chain.staking?.staking_tokens?.[0]?.denom,
+      evmChainId: chain.evmChainId || CONFIG.EVM_CHAIN_ID
+    };
+
     return {
-      chainId: chain.chainId,
-      chainName: chain.chainName,
+      chainId: chainData.chainId,
+      chainName: chainData.chainName,
       rpc: rpcEndpoint,
       rest: restEndpoint,
-      bip44: { coinType: chain.slip44 },
+      bip44: { coinType: chainData.slip44 },
       bech32Config: {
-        bech32PrefixAccAddr: chain.bech32Prefix,
-        bech32PrefixAccPub: `${chain.bech32Prefix}pub`,
-        bech32PrefixValAddr: `${chain.bech32Prefix}valoper`,
-        bech32PrefixValPub: `${chain.bech32Prefix}valoperpub`,
-        bech32PrefixConsAddr: `${chain.bech32Prefix}valcons`,
-        bech32PrefixConsPub: `${chain.bech32Prefix}valconspub`
+        bech32PrefixAccAddr: chainData.bech32Prefix,
+        bech32PrefixAccPub: `${chainData.bech32Prefix}pub`,
+        bech32PrefixValAddr: `${chainData.bech32Prefix}valoper`,
+        bech32PrefixValPub: `${chainData.bech32Prefix}valoperpub`,
+        bech32PrefixConsAddr: `${chainData.bech32Prefix}valcons`,
+        bech32PrefixConsPub: `${chainData.bech32Prefix}valconspub`
       },
       currencies: [{
         coinDenom: feeDenom.toUpperCase(),
@@ -73,9 +84,9 @@ const WalletSuggestion: React.FC<WalletSuggestionProps> = ({ chain, onWalletSele
       const keplrConfig = getKeplrChainConfig(chain);
 
       await keplrWindow.keplr.experimentalSuggestChain(keplrConfig);
-      await keplrWindow.keplr.enable(chain.chainId);
+      await keplrWindow.keplr.enable(chain.chain_id);
       
-      const offlineSigner = keplrWindow.keplr.getOfflineSigner(chain.chainId);
+      const offlineSigner = keplrWindow.keplr.getOfflineSigner(chain.chain_id);
       const accounts = await offlineSigner.getAccounts();
       
       if (accounts[0]) {
@@ -95,7 +106,7 @@ const WalletSuggestion: React.FC<WalletSuggestionProps> = ({ chain, onWalletSele
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
       <div className="flex items-center justify-between">
         <span className="text-sm text-blue-700">
-          Connect your {chain.chainName} wallet to auto-fill receiving address
+          Connect your {chain.chain_name} wallet to auto-fill receiving address
         </span>
         <button
           onClick={connectKeplr}

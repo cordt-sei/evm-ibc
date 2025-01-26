@@ -4,20 +4,20 @@ import { ChainInfo } from '../types';
 import { api } from '../utils/api';
 
 interface ChainInfoState {
-  chainInfo: Map<string, ChainInfo>;
+  chainInfoMap: Map<string, ChainInfo>;
   loading: boolean;
   error: string | null;
 }
 
 export function useChainInfo() {
   const [state, setState] = useState<ChainInfoState>({
-    chainInfo: new Map(),
+    chainInfoMap: new Map(),
     loading: false,
     error: null
   });
 
   const fetchChainInfo = useCallback(async (channelId: string, portId: string = 'transfer') => {
-    if (state.chainInfo.has(channelId)) return;
+    if (state.chainInfoMap.has(channelId)) return;
 
     setState(prev => ({ ...prev, loading: true, error: null }));
     
@@ -30,7 +30,7 @@ export function useChainInfo() {
 
       setState(prev => ({
         ...prev,
-        chainInfo: new Map(prev.chainInfo).set(channelId, chainInfo),
+        chainInfoMap: new Map(prev.chainInfoMap).set(channelId, chainInfo),
         loading: false
       }));
       
@@ -42,7 +42,7 @@ export function useChainInfo() {
         loading: false
       }));
     }
-  }, [state.chainInfo]);
+  }, [state.chainInfoMap]);
 
   return {
     ...state,

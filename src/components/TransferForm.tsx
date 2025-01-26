@@ -1,6 +1,6 @@
 // src/components/TransferForm.tsx
 import React, { useState, useEffect } from 'react';
-import type { IBCToken } from '../types';
+import type { IBCToken, ChainInfo, ExtendedChain } from '../types';
 import { validation } from '../utils/validation';
 import { getTokenDisplayInfo } from '../utils/tokenDisplay';
 import { useChainInfo } from '../hooks/useChainInfo';
@@ -21,6 +21,18 @@ const convertToBaseUnits = (amount: string, decimals: number): bigint => {
   return BigInt(combinedStr || '0');
 };
 
+const combineChainInfo = (extendedChain: ExtendedChain): ChainInfo => {
+  return {
+    chainId: extendedChain.chain_id,
+    chainName: extendedChain.pretty_name || extendedChain.chain_name,
+    bech32Prefix: extendedChain.bech32_prefix,
+    slip44: extendedChain.slip44 || 118,
+    chainData: extendedChain,
+    staking: extendedChain.staking?.staking_tokens?.[0]?.denom,
+    evmChainId: extendedChain.evmChainId || CONFIG.EVM_CHAIN_ID
+  };
+};
+
 interface TransferFormProps {
   selectedToken: IBCToken;
   walletAddress: string;
@@ -32,7 +44,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
 }) => {
   const [receiver, setReceiver] = useState('');
   const [amount, setAmount] = useState('');
-  const { chainInfo, fetchChainInfo } = useChainInfo();
+  const { chainInfoMap, fetchChainInfo } = useChainInfo();
   const { status, handleError, handleSuccess, setPending } = useTransactionStatus();
   const [WalletSuggestion, setWalletSuggestion] = useState<React.ComponentType<any> | null>(null);
   
@@ -104,7 +116,8 @@ const TransferForm: React.FC<TransferFormProps> = ({
   }
 
   const { symbol, decimals } = getTokenDisplayInfo(selectedToken);
-  const isValidAddress = validation.address(receiver, selectedToken.chainInfo);
+  const combinedChainInfo = combineChainInfo(selectedToken.chainInfo);
+  const isValidAddress = validation.address(receiver, combinedChainInfo);
   const isValidAmount = validation.amount(amount, decimals);
   const isTransactionPending = status.status === 'pending';
 
@@ -180,22 +193,22 @@ const TransferForm: React.FC<TransferFormProps> = ({
           </div>
         )}
 
-      {status.status === 'success' && (
-                <div className="p-3 text-sm text-green-600 bg-green-50 rounded">
-                  Transaction successful! View on{' '}
-                  <a
-                    href={`${CONFIG.BLOCK_EXPLORER}/tx/${status.hash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:no-underline"
-                  >
-                    explorer
-                  </a>
-                </div>
-              )}
-            </form>
+        {status.status === 'success' && (
+          <div className="p-3 text-sm text-green-600 bg-green-50 rounded">
+            Transaction successful! View on{' '}
+            <a
+              href={`${CONFIG.BLOCK_EXPLORER}/tx/${status.hash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:no-underline"
+            >
+              explorer
+            </a>
           </div>
-        );
-      };
+        )}
+      </form>
+    </div>
+  );
+};
 
 export default TransferForm;
