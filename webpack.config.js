@@ -101,47 +101,42 @@ export default {
         // Dynamic Labs SDK
         dynamic: {
           test: /[\\/]node_modules[\\/]@dynamic-labs[\\/]/,
-          name: 'dynamic',
+          name: 'npm.dynamic-labs',
           chunks: 'async',
           priority: 35
         },
         // MetaMask SDK
         metamask: {
           test: /[\\/]node_modules[\\/]@metamask[\\/]/,
-          name: 'metamask',
+          name: 'npm.metamask',
           chunks: 'async',
           priority: 35
         },
         // Ethers and related
-        ethers: {
+        ethersLib: {
           test: /[\\/]node_modules[\\/](ethers|@ethersproject)[\\/]/,
-          name: 'ethers',
+          name: 'npm.ethers',
           chunks: 'async',
           priority: 35
         },
         // Chain Registry
         chain: {
           test: /[\\/]node_modules[\\/]chain-registry[\\/]/,
-          name: 'chain',
+          name: 'npm.chain-registry',
           chunks: 'async',
           priority: 30
         },
         // Common utilities
         utils: {
           test: /[\\/]node_modules[\\/](lodash|bignumber\.js|bn\.js)[\\/]/,
-          name: 'utils',
+          name: 'npm.utils',
           chunks: 'async',
           priority: 25
         },
         // Default vendor bundle
-        vendors: {
+        defaultVendors: {
           test: /[\\/]node_modules[\\/]/,
-          name: (module) => {
-            const packageName = module.context.match(
-              /[\\/]node_modules[\\/](.*?)([\\/]|$)/
-            )[1];
-            return `vendor.${packageName.replace('@', '')}`;
-          },
+          name: 'npm.vendor',
           chunks: 'async',
           priority: 20,
           reuseExistingChunk: true,
