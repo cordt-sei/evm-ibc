@@ -17,8 +17,20 @@ export interface GasConfig {
   maxPriorityFeePerGas?: bigint;
 }
 
+// Define the enum-like object for transaction status
+export const TransactionStatusValues = {
+  IDLE: 'idle',
+  PENDING: 'pending',
+  SUCCESS: 'success',
+  ERROR: 'error',
+} as const;
+
+// Define type for status values
+export type TransactionStatusValue = typeof TransactionStatusValues[keyof typeof TransactionStatusValues];
+
+// Define the transaction status interface
 export interface TransactionStatus {
-  status: 'idle' | 'pending' | 'success' | 'error';
+  status: TransactionStatusValue;
   hash?: string;
   error?: Error;
   receipt?: any;

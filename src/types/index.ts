@@ -29,7 +29,10 @@ export type {
   TransferParams,
   GasConfig,
   TransactionStatus,
+  TransactionStatusValue,
 } from './transaction';
+
+export { TransactionStatusValues } from './transaction';
 
 // IBC Types
 export type {
@@ -71,14 +74,7 @@ export type {
   FormState,
 } from './state';
 
-// Constants and Enums
-export const TransactionStatus = {
-  IDLE: 'idle',
-  PENDING: 'pending',
-  SUCCESS: 'success',
-  ERROR: 'error',
-} as const;
-
+// Network and Chain Status Constants
 export const NetworkType = {
   MAINNET: 'mainnet',
   TESTNET: 'testnet',
@@ -91,8 +87,7 @@ export const ChainStatus = {
   KILLED: 'killed',
 } as const;
 
-// Utility Types
-export type TransactionStatusType = typeof TransactionStatus[keyof typeof TransactionStatus];
+// Type definitions for constants
 export type NetworkTypeType = typeof NetworkType[keyof typeof NetworkType];
 export type ChainStatusType = typeof ChainStatus[keyof typeof ChainStatus];
 

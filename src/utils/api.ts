@@ -165,3 +165,12 @@ export type ApiResponse<T> = {
   data?: T;
   error?: string;
 };
+
+// Add these exports at the bottom of the file
+export const fetchDenomTrace = api.fetchDenomTrace.bind(api);
+export const fetchBalances = api.fetchBalances.bind(api);
+export const fetchClientState = api.fetchClientState.bind(api);
+export const resolveCosmosAddress = api.resolveCosmosAddress.bind(api);
+export const fetchChainInfo = api.fetchChainInfo.bind(api);
+export const processIBCTokens = api.processIBCTokens.bind(api);
+export const retryRequest = api.retryRequest.bind(api);

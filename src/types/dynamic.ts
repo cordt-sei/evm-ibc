@@ -1,5 +1,6 @@
 // src/types/dynamic.ts
 import type { DynamicContextProps } from '@dynamic-labs/sdk-react-core';
+import type { ReactNode } from 'react';
 
 export interface EVMNetwork {
   chainId: number;
@@ -13,7 +14,7 @@ export interface EVMNetwork {
   blockExplorerUrls: string[];
 }
 
-export interface DynamicConfig extends Omit<DynamicContextProps, 'settings'> {
+export interface DynamicSettings {
   environmentId: string;
   appName: string;
   walletConnectors: string[];
@@ -30,3 +31,6 @@ export interface DynamicConfig extends Omit<DynamicContextProps, 'settings'> {
     };
   };
 }
+
+// Re-export DynamicConfig as DynamicSettings
+export type { DynamicSettings as DynamicConfig };

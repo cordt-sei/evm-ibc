@@ -103,7 +103,7 @@ export async function executeTransfer(
   provider: JsonRpcProvider,
   gasConfig: Partial<GasConfig> = {}
 ): Promise<TransactionResponse> {
-  const signer = provider.getSigner();
+  const signer = await provider.getSigner();
   if (!signer) {
     throw new IBCTransferError('Provider must be connected to a signer');
   }

@@ -23,15 +23,6 @@ root.render(
         ...dynamicSettings,
         walletConnectors: [EthereumWalletConnectors]
       }}
-      onAuthSuccess={(args) => {
-        console.log('Auth success:', args);
-      }}
-      onAuthError={(error) => {
-        console.error('Auth error:', error);
-      }}
-      onLogout={() => {
-        console.log('Logged out');
-      }}
     >
       <App />
     </DynamicContextProvider>
