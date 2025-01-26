@@ -39,12 +39,13 @@ yarn build
 ## Environment Variables
 
 ```
-REACT_APP_SEI_RPC_URL=        # SEI EVM RPC endpoint
-REACT_APP_ENVIRONMENT_ID=      # Dynamic SDK environment ID
-REACT_APP_CHAIN_ID=           # SEI chain ID (e.g. atlantic-2)
+REACT_APP_SEI_API_URL=        # Cosmos-SDK REST API endpoint
+REACT_APP_SEI_RPC_URL=        # EVM RPC endpoint
+REACT_APP_ENVIRONMENT_ID=     # Dynamic SDK environment ID
+REACT_APP_CHAIN_ID=           # Cosmos-SDK chain ID (pacific-1)
 ```
 
-## Usage Flow
+## CConcept
 
 - Connect EVM wallet
 - System fetches associated Cosmos wallet
@@ -75,12 +76,11 @@ yarn lint:fix
 yarn analyze
 ```
 
-## Security
+## Please note
 
-- Only allows return transfers through original receiving channel
+- Only allows return transfers of IBC tokens through original channel
 - Validates bech32 addresses against expected prefix
-- Prevents multi-hop token transfers
-- Implements timeout handling
+- Does not support multi-hop token transfers
 
 ## License
 
