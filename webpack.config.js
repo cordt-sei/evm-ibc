@@ -5,15 +5,18 @@ import Dotenv from 'dotenv-webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import { fileURLToPath } from 'url';
 import TerserPlugin from 'terser-webpack-plugin';
+import CompressionPlugin from 'compression-webpack-plugin';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const isProd = process.env.NODE_ENV === 'production';
 
 export default {
   entry: './src/index.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: '[name].[contenthash].js',
+    filename: isProd ? '[name].[contenthash].js' : '[name].js',
+    chunkFilename: isProd ? '[name].[contenthash].chunk.js' : '[name].chunk.js',
     clean: true
   },
   module: {
@@ -39,69 +42,121 @@ export default {
     alias: {
       '@': path.resolve(__dirname, 'src'),
       'lodash-es': 'lodash'
+    },
+    fallback: {
+      "crypto": false,
+      "stream": false,
+      "util": false
     }
   },
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/public/index.html',
       inject: true,
-      minify: {
-        removeComments: true,
-        collapseWhitespace: true
-      }
+      minify: isProd
     }),
     new Dotenv(),
-    process.env.ANALYZE === 'true' && new BundleAnalyzerPlugin()
+    isProd && new CompressionPlugin({
+      algorithm: 'gzip',
+      test: /\.(js|css|html|svg)$/,
+      threshold: 10240,
+      minRatio: 0.8
+    }),
+    process.env.ANALYZE === 'true' && new BundleAnalyzerPlugin({
+      analyzerMode: 'static',
+      reportFilename: 'bundle-report.html',
+      openAnalyzer: true
+    })
   ].filter(Boolean),
   optimization: {
-    minimize: true,
-    minimizer: [new TerserPlugin({
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          dead_code: true
+    minimize: isProd,
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          compress: {
+            drop_console: true,
+            dead_code: true,
+            drop_debugger: true,
+            pure_funcs: ['console.log', 'console.info', 'console.debug']
+          },
+          mangle: true
         }
-      }
-    })],
+      })
+    ],
     splitChunks: {
       chunks: 'all',
       maxInitialRequests: 25,
+      maxAsyncRequests: 30,
       minSize: 20000,
+      maxSize: 244000,
       cacheGroups: {
-        default: false,
-        defaultVendors: false,
+        // React and core dependencies
         framework: {
+          test: /[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-sync-external-store)[\\/]/,
           name: 'framework',
           chunks: 'all',
-          test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
           priority: 40,
           enforce: true
         },
-        chainRegistry: {
-          test: /[\\/]node_modules[\\/]chain-registry[\\/]/,
-          name: 'chain-registry',
-          chunks: 'async',
-          priority: 30
-        },
-        dynamicLabs: {
+        // Dynamic Labs SDK
+        dynamic: {
           test: /[\\/]node_modules[\\/]@dynamic-labs[\\/]/,
-          name: 'dynamic-labs',
+          name: 'dynamic',
+          chunks: 'async',
+          priority: 35
+        },
+        // MetaMask SDK
+        metamask: {
+          test: /[\\/]node_modules[\\/]@metamask[\\/]/,
+          name: 'metamask',
+          chunks: 'async',
+          priority: 35
+        },
+        // Ethers and related
+        ethers: {
+          test: /[\\/]node_modules[\\/](ethers|@ethersproject)[\\/]/,
+          name: 'ethers',
+          chunks: 'async',
+          priority: 35
+        },
+        // Chain Registry
+        chain: {
+          test: /[\\/]node_modules[\\/]chain-registry[\\/]/,
+          name: 'chain',
           chunks: 'async',
           priority: 30
         },
-        commons: {
-          name: 'commons',
-          minChunks: 2,
-          priority: 20,
+        // Common utilities
+        utils: {
+          test: /[\\/]node_modules[\\/](lodash|bignumber\.js|bn\.js)[\\/]/,
+          name: 'utils',
           chunks: 'async',
-          reuseExistingChunk: true
+          priority: 25
+        },
+        // Default vendor bundle
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          name: (module) => {
+            const packageName = module.context.match(
+              /[\\/]node_modules[\\/](.*?)([\\/]|$)/
+            )[1];
+            return `vendor.${packageName.replace('@', '')}`;
+          },
+          chunks: 'async',
+          priority: 20,
+          reuseExistingChunk: true,
+          minSize: 10000
         }
       }
     },
-    runtimeChunk: 'single'
+    runtimeChunk: {
+      name: 'runtime'
+    }
   },
   performance: {
-    hints: false
+    hints: isProd ? 'warning' : false,
+    maxEntrypointSize: 512000,
+    maxAssetSize: 512000
   },
   devServer: {
     historyApiFallback: true,
@@ -109,5 +164,5 @@ export default {
     hot: true,
     open: true
   },
-  devtool: process.env.NODE_ENV === 'production' ? 'source-map' : 'eval-source-map'
+  devtool: isProd ? 'source-map' : 'eval-source-map'
 };
