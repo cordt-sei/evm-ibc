@@ -63,58 +63,63 @@ const TransferForm: React.FC<TransferFormProps> = ({
     }
   }, [selectedToken, fetchChainInfo]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+// Update the handleSubmit function in TransferForm.tsx
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!primaryWallet?.connector?.provider) {
-      handleError(new Error('Please connect your wallet first'));
-      return;
+  if (!primaryWallet?.connector) {
+    handleError(new Error('Please connect your wallet first'));
+    return;
+  }
+
+  try {
+    const { transaction } = await loadTransaction();
+    
+    // Get the public client for read operations
+    const publicClient = primaryWallet.connector.getPublicClient();
+    if (!publicClient) {
+      throw new Error('Failed to get provider');
     }
 
-    try {
-      const { transaction } = await loadTransaction();
-      const provider = new BrowserProvider(primaryWallet.connector.provider);
-      const signer = await provider.getSigner();
-
-      // Verify network connection
-      const network = await provider.getNetwork();
-      if (network.chainId !== BigInt(CONFIG.EVM_CHAIN_ID)) {
-        throw new Error(`Wrong network. Expected chain ID ${CONFIG.EVM_CHAIN_ID}`);
-      }
-
-      const currentBlock = await provider.getBlockNumber();
-      const height = {
-        revision_number: '1',
-        revision_height: currentBlock.toString()
-      };
-
-      const { decimals } = getTokenDisplayInfo(selectedToken);
-      const baseUnits = convertToBaseUnits(amount, decimals);
-
-      const transferParams = transaction.constructTransferParams(
-        selectedToken,
-        receiver,
-        baseUnits,
-        height
-      );
-
-      const gasConfig = await transaction.estimateGas(provider, transferParams);
-      
-      const tx = await transaction.executeTransfer(
-        transferParams, 
-        provider, 
-        { ...gasConfig, signer }
-      );
-      
-      setPending(tx.hash);
-      
-      const receipt = await tx.wait();
-      handleSuccess(receipt);
-    } catch (error) {
-      handleError(error as Error);
-      console.error('Transfer error:', error);
+    // Get the wallet client for signing
+    const walletClient = await primaryWallet.connector.getWalletClient();
+    if (!walletClient) {
+      throw new Error('Failed to get signer');
     }
-  };
+
+    // Verify network connection
+    const network = await publicClient.getChainId();
+    if (network !== BigInt(CONFIG.EVM_CHAIN_ID)) {
+      throw new Error(`Wrong network. Expected chain ID ${CONFIG.EVM_CHAIN_ID}`);
+    }
+
+    const currentBlock = await publicClient.getBlockNumber();
+    const height = {
+      revision_number: '1',
+      revision_height: currentBlock.toString()
+    };
+
+    const { decimals } = getTokenDisplayInfo(selectedToken);
+    const baseUnits = convertToBaseUnits(amount, decimals);
+
+    const transferParams = transaction.constructTransferParams(
+      selectedToken,
+      receiver,
+      baseUnits,
+      height
+    );
+
+    // Use the walletClient to send the transaction
+    const tx = await transaction.executeTransfer(transferParams, publicClient, walletClient);
+    setPending(tx.hash);
+    
+    const receipt = await tx.wait();
+    handleSuccess(receipt);
+  } catch (error) {
+    handleError(error as Error);
+    console.error('Transfer error:', error);
+  }
+}
 
   if (!selectedToken.chainInfo) {
     return (
